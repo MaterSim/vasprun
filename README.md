@@ -6,7 +6,14 @@ This repo is primarily used for extract useful information from vasprun.xml and 
 - force analysys
 - eigenvalue analysys
 
-To use
+## Prerequisites
+To use it, one must have python 3 installed. It is recommended to install conda if one don't have root access in his computer.
+In addition, several packages will be required
+- pymatgen
+- pandans
+- lxml
+
+One could follow the [wikipage](https://github.com/qzhu2017/CMS/wiki/Python-environment-setup) to set up your python environment.
 
 $ python vasprun.py -h
 ```

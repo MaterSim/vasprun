@@ -77,7 +77,7 @@ class vasprun:
         return dict_del
 
     def parse_finalpos(self, finalpos):
-        """obtain """
+        """obtain final configuration"""
         d = {}
         for i in finalpos.iter("varray"):
             name = i.attrib.get("name")
@@ -207,13 +207,13 @@ class vasprun:
         for i in child.iterchildren():
             if i.tag == "array" and i.attrib.get("name") == 'atomtypes':
                ll = list(i.iter('c'))
-               for i in range(3,10,5):
+               for i in range(3,len(ll),5):
                    valence.append(float(ll[i].text))
 
-               for i in range(2,10,5):
+               for i in range(2,len(ll),5):
                    mass.append(float(ll[i].text))
 
-               for i in range(4,10,5):
+               for i in range(4,len(ll),5):
                    text = ll[i].text.split()
                    label = text[1]
                    pot = text[0].split('_')[0]
@@ -452,12 +452,12 @@ if __name__ == "__main__":
   
     if options.force == 'yes':
        col_name = {'lattice':test.values['finalpos']['basis'],
-                   'stress': test.values['calculation']['stress']}
+                   'stress (eV)': test.values['calculation']['stress']}
        df = pd.DataFrame(col_name)
        #pd.set_option('precision',4)
        print(tabulate(df, headers='keys', tablefmt='psql'))
        col_name = {'atom': test.values['finalpos']['positions'],
-                   'force': test.values['calculation']['force']}
+                   'force (eV/A)': test.values['calculation']['force']}
        df = pd.DataFrame(col_name)
        print(tabulate(df, headers='keys', tablefmt='psql'))
      

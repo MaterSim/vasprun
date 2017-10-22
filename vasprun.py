@@ -11,6 +11,8 @@ class vasprun:
            doc = etree.parse(vasp_file)
            doc = doc.getroot()
            self.parse_vaspxml(doc)
+           self.get_band_gap()
+
         except etree.XMLSyntaxError:
            print('corrupted file found')
            self.error = True
@@ -33,12 +35,15 @@ class vasprun:
                self.values[child.tag] = self.parse_i_tag_collection(child)
            elif child.tag == "kpoints":
                self.values[child.tag] = self.parse_kpoints(child)
+           elif child.tag == "parameters":
+               self.values[child.tag] = self.parse_i_tag_collection(child)
            elif child.tag == "atominfo":
                self.values["name_array"] = self.parse_name_array(child)
                self.values["composition"] = self.parse_composition(child)
                self.values["elements"] = self.get_element(self.values["composition"])
                self.values["formula"] = self.get_formula(self.values["composition"])
-               self.values["pseudo_potential"], self.values["potcar_symbols"] = \
+               self.values["pseudo_potential"], self.values["potcar_symbols"], \
+               self.values["valence"], self.values["mass"] = \
                                         self.get_potcar(child)
                
            elif child.tag == "calculation":
@@ -87,6 +92,28 @@ class vasprun:
             content = info.text
             d[name] = self.assign_type(type, content)
         return d
+   
+    @staticmethod
+    def parse_varray_pymatgen(elem):
+        def _vasprun_float(f):
+            """
+            Large numbers are often represented as ********* in the vasprun.
+            This function parses these values as np.nan
+            """
+            try:
+                return float(f)
+            except ValueError as e:
+                f = f.strip()
+                if f == '*' * len(f):
+                    warnings.warn('Float overflow (*******) encountered in vasprun')
+                    return np.nan
+                raise e
+        if elem.get("type", None) == 'logical':
+            m = [[True if i=='T' else False for i in v.text.split()] for v in elem]
+        else:
+            m = [[_vasprun_float(i) for i in v.text.split()] for v in elem]
+
+        return m       
 
     @staticmethod
     def parse_varray(varray):
@@ -173,9 +200,17 @@ class vasprun:
         #['PAW_PBE', 'N', '08Apr2002']
         pseudo = {'labels': [], 'pot_type':[], 'functional': []}
         potcar_symbol = []
+        valence = []
+        mass = []
         for i in child.iterchildren():
             if i.tag == "array" and i.attrib.get("name") == 'atomtypes':
                ll = list(i.iter('c'))
+               for i in range(3,10,5):
+                   valence.append(float(ll[i].text))
+
+               for i in range(2,10,5):
+                   mass.append(float(ll[i].text))
+
                for i in range(4,10,5):
                    text = ll[i].text.split()
                    label = text[1]
@@ -185,8 +220,8 @@ class vasprun:
                    pseudo['pot_type'].append(pot) 
                    pseudo['functional'].append(xc) 
                    potcar_symbol.append(xc + ' ' + label)
-        #print(pp)          
-        return pseudo, potcar_symbol 
+        #print(type(valence[0]))          
+        return pseudo, potcar_symbol, valence, mass
 
     @staticmethod
     def parse_name_array(atominfo):
@@ -200,10 +235,18 @@ class vasprun:
 
         return atom_names
 
+#    def parse_eigenvalue(self, eigenvalue):
+#        eigenvalue = eigenvalue.find("array")
+#        eigenvalues = self.parse_array(eigenvalue)
+#        return eigenvalues
+
     def parse_eigenvalue(self, eigenvalue):
-        eigenvalue = eigenvalue.find("array")
-        eigenvalues = self.parse_array(eigenvalue)
+        eigenvalues = []
+        for s in eigenvalue.find("array").find("set").findall("set"):
+            for ss in s.findall("set"):
+                eigenvalues.append(self.parse_varray_pymatgen(ss))
         return eigenvalues
+
 
     def parse_calculation(self, calculation):
         stress = []
@@ -244,12 +287,85 @@ class vasprun:
             if name == "kpointlist":
                 kpoints_matrix = self.parse_varray(va)
         return kpoints_matrix
+    
+    def get_bands(self):
+        valence = self.values['valence']
+        composition = self.values['composition']
+        total = 0
+        for atom, val in zip(composition.keys(), valence):
+            total += composition[atom]*val
+        
+        total = int(total)
 
+        if total%2 == 0:
+           IBAND = int(total)/2
+           occupy = True
+        else:
+           IBAND = int(total)/2 + 1
+           occupy = False
+
+        self.values["bands"] = IBAND
+        self.values["occupy"] = occupy
+
+    @staticmethod
+    def get_cbm(kpoints, efermi, eigens, IBAND):
+
+        ind = np.argmin(eigens[:, IBAND, 0]) 
+        pos = kpoints[ind]
+        value = eigens[ind, IBAND, 0] - efermi
+        return {'kpoint': pos, 'value':value}
+
+    @staticmethod
+    def get_vbm(kpoints, efermi, eigens, IBAND):
+        
+        ind = np.argmax(eigens[:, IBAND, 0]) 
+        pos = kpoints[ind]
+        value = eigens[ind, IBAND, 0] - efermi
+
+        return {'kpoint': pos, 'value':value}
+
+    def get_band_gap(self):
+        self.get_bands()
+        IBAND = int(self.values['bands'])
+        occupy = self.values['occupy']
+        self.values['metal'] = False
+        self.values['gap'] = None
+        self.values['cbm'] = None
+        self.values['vbm'] = None
+
+        if occupy is True:
+           efermi = self.values["calculation"]["efermi"] 
+           eigens = np.array(self.values['calculation']['eigenvalues'])
+           kpoints= np.array(self.values['kpoints'])
+           if np.shape(eigens)[0] > np.shape(kpoints)[0]:
+              kpoints = np.tile(kpoints, [2,1]) 
+
+           cbm = self.get_cbm(kpoints, efermi, eigens, IBAND)
+           vbm = self.get_vbm(kpoints, efermi, eigens, IBAND-1)
+           self.values['gap'] = cbm['value'] - vbm['value']
+           self.values['cbm'] = cbm
+           self.values['vbm'] = vbm
+           if self.values['gap'] < 0:
+              self.values['metal'] = True
+        else:
+           self.values['metal'] = True
+        
 
 from pprint import pprint
+import numpy as np
+
 if __name__ == "__main__":
     
     test = vasprun()
-    pprint(test.values)
+    pprint(test.values['valence'])
+    pprint(test.values['composition'])
+    pprint(test.values['calculation']['efermi'])
+    pprint(test.values['metal'])
+    if test.values['metal'] is False:
+       pprint(test.values['cbm'])
+       pprint(test.values['vbm'])
+       pprint(test.values['gap'])
+    
+    
     #for i in test.values:
     #    print(test.values[i])

@@ -382,6 +382,9 @@ class vasprun:
 
 from pprint import pprint
 from optparse import OptionParser
+import pandas as pd
+from tabulate import tabulate
+
 
 if __name__ == "__main__":
     #------------------------------------------------------------------
@@ -397,6 +400,9 @@ if __name__ == "__main__":
                       help="kpoints list", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot",
                       help="dos plot", metavar="dos_plot")
+    parser.add_option("-f", "--showforce", dest="force",default='no',
+                      help="dos plot", metavar="dos_plot")
+
 
 
     (options, args) = parser.parse_args()    
@@ -417,9 +423,23 @@ if __name__ == "__main__":
            for subtag in output[tag]:
                print(subtag, ':  ', test.values[tag][subtag])
 
+    if options.force == 'yes':
+       col_name = {'lattice':test.values['finalpos']['basis'],
+                   'stress': test.values['calculation']['stress']}
+       df = pd.DataFrame(col_name)
+       #pd.set_option('precision',4)
+       print(tabulate(df, headers='keys', tablefmt='psql'))
+       col_name = {'atom': test.values['finalpos']['positions'],
+                   'force': test.values['calculation']['force']}
+       df = pd.DataFrame(col_name)
+       print(tabulate(df, headers='keys', tablefmt='psql'))
+     
+
     if options.incar:
        test.export_incar(filename = options.incar)
     elif options.poscar:
        test.export_structure(filename = options.poscar)
     elif options.cif:
        test.export_structure(filename = options.cif)
+
+    #pprint(test.values)

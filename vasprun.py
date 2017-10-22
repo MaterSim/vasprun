@@ -393,28 +393,31 @@ if __name__ == "__main__":
     parser.add_option("-i", "--incar", dest="incar", metavar='incar file',
                       help="export incar")
     parser.add_option("-p", "--poscar", dest="poscar",
-                      help="get poscar", metavar="poscar file")
+                      help="export poscar", metavar="poscar file")
     parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
-                      help="get symmetrized cif")
+                      help="export symmetrized cif")
     parser.add_option("-k", "--kpoints", dest="kpoints",
                       help="kpoints list", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot",
-                      help="dos plot", metavar="dos_plot")
+                      help="export dos plot", metavar="dos_plot")
+    parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
+                      help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force",default='no',
-                      help="dos plot", metavar="dos_plot")
+                      help="show forces, default: no", metavar="dos_plot")
 
 
 
     (options, args) = parser.parse_args()    
-    test = vasprun()
+    if options.vasprun is None:
+       test = vasprun()
+    else:
+       test = vasprun(options.vasprun)
+
+
     # standard output
-    output = {'composition': None,
-              'valence': None,
-              "pseudo_potential": None,
+    output = {'formula': None,
               'calculation':['efermi','energy'],
               'metal': None,
-              'cbm': None,
-              'vbm': None,
               'gap': None}
     for tag in output.keys():
         if output[tag] is None:
@@ -423,6 +426,19 @@ if __name__ == "__main__":
            for subtag in output[tag]:
                print(subtag, ':  ', test.values[tag][subtag])
 
+    col_name = {'label': ['CBM', 'VBM'],
+                'kpoint':     [test.values['cbm']['kpoint'], test.values['vbm']['kpoint']],
+                'values':     [test.values['cbm']['value'], test.values['vbm']['value']]}
+    df = pd.DataFrame(col_name)
+    print(tabulate(df, headers='keys', tablefmt='psql'))
+   
+
+    col_name = {'valence':    test.values['valence'],
+                'labels':     test.values['pseudo_potential']['labels'],
+                'functional': test.values['pseudo_potential']['functional']}
+    df = pd.DataFrame(col_name)
+    print(tabulate(df, headers='keys', tablefmt='psql'))
+  
     if options.force == 'yes':
        col_name = {'lattice':test.values['finalpos']['basis'],
                    'stress': test.values['calculation']['stress']}
@@ -434,7 +450,6 @@ if __name__ == "__main__":
        df = pd.DataFrame(col_name)
        print(tabulate(df, headers='keys', tablefmt='psql'))
      
-
     if options.incar:
        test.export_incar(filename = options.incar)
     elif options.poscar:

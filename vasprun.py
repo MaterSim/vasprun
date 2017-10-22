@@ -1,6 +1,7 @@
 from lxml import etree
 from pymatgen.io.cif import CifWriter
 from pymatgen import Structure
+import numpy as np 
 
 class vasprun:
     """parse vasprun.xml and return all useful info to self.values"""
@@ -366,7 +367,7 @@ class vasprun:
             with open(filename, 'w') as f:
                  f.writelines(contents)           
 
-    def export_poscar(self, filename, fileformat = 'poscar'):
+    def export_structure(self, filename, fileformat = 'poscar'):
         """export incar"""
         atomNames = self.values["name_array"]
         latt = self.values["finalpos"]["basis"]
@@ -379,20 +380,46 @@ class vasprun:
         else:
            CifWriter(struc, symprec=0.01).write_file(filename)
 
-
 from pprint import pprint
-import numpy as np
+from optparse import OptionParser
 
 if __name__ == "__main__":
-    
+    #------------------------------------------------------------------
+    #-------------------------------- Options -------------------------
+    parser = OptionParser()
+    parser.add_option("-i", "--incar", dest="incar", metavar='incar file',
+                      help="export incar")
+    parser.add_option("-p", "--poscar", dest="poscar",
+                      help="get poscar", metavar="poscar file")
+    parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
+                      help="get symmetrized cif")
+    parser.add_option("-k", "--kpoints", dest="kpoints",
+                      help="kpoints list", metavar="kpoints file")
+    parser.add_option("-d", "--dosplot", dest="dosplot",
+                      help="dos plot", metavar="dos_plot")
+
+
+    (options, args) = parser.parse_args()    
     test = vasprun()
-    pprint(test.values['composition'])
-    pprint(test.values['calculation']['efermi'])
-    pprint(test.values['metal'])
-    test.export_incar('incar')
-    test.export_incar()
-    test.export_poscar('1.vasp')
-    test.export_poscar('1.cif', fileformat='cif')
-    
-    #for i in test.values:
-    #    print(test.values[i])
+    # standard output
+    output = {'composition': None,
+              'valence': None,
+              "pseudo_potential": None,
+              'calculation':['efermi','energy'],
+              'metal': None,
+              'cbm': None,
+              'vbm': None,
+              'gap': None}
+    for tag in output.keys():
+        if output[tag] is None:
+           print(tag, ':  ', test.values[tag])
+        else:
+           for subtag in output[tag]:
+               print(subtag, ':  ', test.values[tag][subtag])
+
+    if options.incar:
+       test.export_incar(filename = options.incar)
+    elif options.poscar:
+       test.export_structure(filename = options.poscar)
+    elif options.cif:
+       test.export_structure(filename = options.cif)

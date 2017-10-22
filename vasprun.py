@@ -39,7 +39,7 @@ class vasprun:
            elif child.tag == "kpoints":
                self.values[child.tag] = self.parse_kpoints(child)
            elif child.tag == "parameters":
-               self.values[child.tag] = self.parse_i_tag_collection(child)
+               self.values[child.tag] = self.parse_parameters(child)
            elif child.tag == "atominfo":
                self.values["name_array"] = self.parse_name_array(child)
                self.values["composition"] = self.parse_composition(child)
@@ -48,7 +48,6 @@ class vasprun:
                self.values["pseudo_potential"], self.values["potcar_symbols"], \
                self.values["valence"], self.values["mass"] = \
                                         self.get_potcar(child)
-               
            elif child.tag == "calculation":
                self.values["calculation"] = self.parse_calculation(child)
            elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
@@ -242,6 +241,14 @@ class vasprun:
 #        eigenvalue = eigenvalue.find("array")
 #        eigenvalues = self.parse_array(eigenvalue)
 #        return eigenvalues
+    def parse_parameters(self, child):
+        parameters = {}
+        for i in child:
+            if i.tag == "separator":
+                name = i.attrib.get("name")
+                d = self.parse_i_tag_collection(i)
+                parameters[name]=d
+        return parameters
 
     def parse_eigenvalue(self, eigenvalue):
         eigenvalues = []
@@ -413,8 +420,12 @@ if __name__ == "__main__":
     else:
        test = vasprun(options.vasprun)
 
-
+  
     # standard output
+    if test.values['parameters']['ionic']['NSW'] <=1:
+       print('This is a single point calculation')
+    #pprint(test.values['kpoints'])
+
     output = {'formula': None,
               'calculation':['efermi','energy'],
               'metal': None,

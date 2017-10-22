@@ -452,7 +452,7 @@ if __name__ == "__main__":
   
     if options.force == 'yes':
        col_name = {'lattice':test.values['finalpos']['basis'],
-                   'stress (eV)': test.values['calculation']['stress']}
+                   'stress (kbar)': test.values['calculation']['stress']}
        df = pd.DataFrame(col_name)
        #pd.set_option('precision',4)
        print(tabulate(df, headers='keys', tablefmt='psql'))

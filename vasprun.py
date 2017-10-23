@@ -436,12 +436,14 @@ if __name__ == "__main__":
         else:
            for subtag in output[tag]:
                print(subtag, ':  ', test.values[tag][subtag])
-
-    col_name = {'label': ['CBM', 'VBM'],
-                'kpoint':     [test.values['cbm']['kpoint'], test.values['vbm']['kpoint']],
-                'values':     [test.values['cbm']['value'], test.values['vbm']['value']]}
-    df = pd.DataFrame(col_name)
-    print(tabulate(df, headers='keys', tablefmt='psql'))
+    
+    #show VBM and CBM when it is nonmetal
+    if test.values['metal'] is False:
+       col_name = {'label': ['CBM', 'VBM'],
+                   'kpoint':     [test.values['cbm']['kpoint'], test.values['vbm']['kpoint']],
+                   'values':     [test.values['cbm']['value'], test.values['vbm']['value']]}
+       df = pd.DataFrame(col_name)
+       print(tabulate(df, headers='keys', tablefmt='psql'))
    
 
     col_name = {'valence':    test.values['valence'],

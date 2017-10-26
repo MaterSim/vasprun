@@ -1,5 +1,6 @@
 from lxml import etree
 from pymatgen.io.cif import CifWriter
+from pymatgen.io.vasp import Poscar
 from pymatgen import Structure
 import numpy as np 
 
@@ -388,7 +389,7 @@ class vasprun:
         struc = Structure(latt, atomNames, pos)
         
         if fileformat == 'poscar':
-           struc.to(fmt='poscar', filename=filename)
+           Poscar(struc).write_file(filename=filename)
         else:
            CifWriter(struc, symprec=0.01).write_file(filename)
 

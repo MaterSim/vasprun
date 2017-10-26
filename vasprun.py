@@ -474,6 +474,6 @@ if __name__ == "__main__":
     elif options.poscar:
        test.export_structure(filename = options.poscar)
     elif options.cif:
-       test.export_structure(filename = options.cif)
+       test.export_structure(filename = options.cif, fileformat='cif')
 
     #pprint(test.values)

@@ -15,6 +15,10 @@ class vasprun:
            doc = doc.getroot()
            self.parse_vaspxml(doc)
            self.get_band_gap()
+           N_atom = len(self.values['finalpos']['positions'])
+           self.values['calculation']['energy_per_atom'] = \
+           self.values['calculation']['energy']/N_atom
+
 
         except etree.XMLSyntaxError:
            print('corrupted file found')
@@ -57,6 +61,7 @@ class vasprun:
            #else:
            #    return 1
            self.dict_clean(self.values)
+
     @staticmethod
     def dict_clean(dict_del):
         """
@@ -427,7 +432,7 @@ if __name__ == "__main__":
     #pprint(test.values['kpoints'])
 
     output = {'formula': None,
-              'calculation':['efermi','energy'],
+              'calculation':['efermi','energy', 'energy_per_atom'],
               'metal': None,
               'gap': None}
     for tag in output.keys():

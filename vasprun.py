@@ -54,6 +54,7 @@ class vasprun:
                self.values["valence"], self.values["mass"] = \
                                         self.get_potcar(child)
            elif child.tag == "calculation":
+               self.values["calculation"] = self.parse_scf(child)
                self.values["calculation"] = self.parse_calculation(child)
            elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
                self.values["finalpos"] = self.parse_finalpos(child)
@@ -263,6 +264,18 @@ class vasprun:
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
         return eigenvalues
 
+    def parse_scf(self, calculation):
+        
+        for i in calculation.iterchildren():
+            if i.tag == "scstep":
+                j = i.findall('energy')
+                print(j.text)
+                for e in j.findall("i"):
+                    if e.attrib.get("name") == "e_fr_energy":
+                        print(e.text)
+
+        return calculation
+
 
     def parse_calculation(self, calculation):
         stress = []
@@ -285,7 +298,8 @@ class vasprun:
             elif i.tag == "energy":
                 for e in i.findall("i"):
                     if e.attrib.get("name") == "e_fr_energy":
-                        energy = float(e.text)
+                        print(e.text)
+                        energy_tmp = float(e.text)
                     else:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
 

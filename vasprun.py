@@ -11,21 +11,22 @@ class vasprun:
 
         self.error = False
         self.values = {}
-        try: 
-           doc = etree.parse(vasp_file)
-           doc = doc.getroot()
-           self.parse_vaspxml(doc)
-           self.get_band_gap()
-           N_atom = len(self.values['finalpos']['positions'])
-           self.values['calculation']['energy_per_atom'] = \
-           self.values['calculation']['energy']/N_atom
-
-
+        try:
+            doc = etree.parse(vasp_file)
+            doc = doc.getroot()
+            self.parse_vaspxml(doc)
+            self.get_band_gap()
+            N_atom = len(self.values['finalpos']['positions'])
+            self.values['calculation']['energy_per_atom'] = \
+            self.values['calculation']['energy']/N_atom
         except etree.XMLSyntaxError:
-           print('corrupted file found')
-           self.error = True
-           return None
+            self.error = True
+            self.errormsg = 'corrupted file found'
 
+        if self.error is True:
+            print("----------Warning---------------")
+            print(self.errormsg)
+            print("--------------------------------")
    
     def parse_vaspxml(self, xml_object):
         """
@@ -54,8 +55,10 @@ class vasprun:
                self.values["valence"], self.values["mass"] = \
                                         self.get_potcar(child)
            elif child.tag == "calculation":
-               self.values["calculation"] = self.parse_scf(child)
-               self.values["calculation"] = self.parse_calculation(child)
+               self.values["calculation"], scf_count = self.parse_calculation(child)
+               if self.values['parameters']['response functions']['NELM'] == scf_count:
+                   self.error = True
+                   self.errormsg = 'SCF is not converged'
            elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
                self.values["finalpos"] = self.parse_finalpos(child)
            elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
@@ -264,25 +267,13 @@ class vasprun:
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
         return eigenvalues
 
-    def parse_scf(self, calculation):
-        
-        for i in calculation.iterchildren():
-            if i.tag == "scstep":
-                j = i.findall('energy')
-                print(j.text)
-                for e in j.findall("i"):
-                    if e.attrib.get("name") == "e_fr_energy":
-                        print(e.text)
-
-        return calculation
-
-
     def parse_calculation(self, calculation):
         stress = []
         force = []
         efermi = 0.0
         eigenvalues = []
         energy = 0.0
+        scf_count = 0
         for i in calculation.iterchildren():
             if i.attrib.get("name") == "stress":
                 stress = self.parse_varray(i)
@@ -295,10 +286,16 @@ class vasprun:
                         break
             elif i.tag == "eigenvalues":
                 eigenvalues = self.parse_eigenvalue(i)
+            elif i.tag == "scstep":
+                for j in i.iterchildren():
+                    if j.tag == 'energy':
+                        for e in j.findall("i"):
+                            if e.attrib.get("name") == "e_fr_energy":
+                               scf_count +=1
+
             elif i.tag == "energy":
                 for e in i.findall("i"):
                     if e.attrib.get("name") == "e_fr_energy":
-                        print(e.text)
                         energy_tmp = float(e.text)
                     else:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
@@ -309,7 +306,7 @@ class vasprun:
         calculation["force"] = force
         calculation["eigenvalues"] = eigenvalues
         calculation["energy"] = energy
-        return calculation
+        return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
         for va in kpoints.findall("varray"):

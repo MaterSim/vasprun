@@ -297,7 +297,7 @@ class vasprun:
             elif i.tag == "energy":
                 for e in i.findall("i"):
                     if e.attrib.get("name") == "e_fr_energy":
-                        energy_tmp = float(e.text)
+                        energy = float(e.text)
                     else:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
 

@@ -10,6 +10,7 @@ class vasprun:
     def __init__(self, vasp_file='vasprun.xml'):
 
         self.error = False
+        self.errormsg = ''
         self.values = {}
         try:
             doc = etree.parse(vasp_file)

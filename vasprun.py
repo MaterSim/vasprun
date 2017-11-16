@@ -310,11 +310,14 @@ class vasprun:
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
+        kpoints_dict = {'list':[], 'weights':[]}
         for va in kpoints.findall("varray"):
             name = va.attrib["name"]
             if name == "kpointlist":
-                kpoints_matrix = self.parse_varray(va)
-        return kpoints_matrix
+                kpoints_dict['list'] = self.parse_varray(va)
+            elif name == "weights":
+                kpoints_dict['weights'] = self.parse_varray(va)
+        return kpoints_dict
     
     def get_bands(self):
         valence = self.values['valence']
@@ -364,7 +367,7 @@ class vasprun:
         if occupy is True:
            efermi = self.values["calculation"]["efermi"] 
            eigens = np.array(self.values['calculation']['eigenvalues'])
-           kpoints= np.array(self.values['kpoints'])
+           kpoints= np.array(self.values['kpoints']['list'])
            if np.shape(eigens)[0] > np.shape(kpoints)[0]:
               kpoints = np.tile(kpoints, [2,1]) 
 
@@ -383,6 +386,25 @@ class vasprun:
         contents = []
         for key in self.values['incar'].keys():
             content = key + ' = ' + str(self.values['incar'][key]) 
+            if filename is None:
+               print(content)
+            else: 
+               content += '\n'
+               contents.append(str(content))
+        if filename is not None:
+            with open(filename, 'w') as f:
+                 f.writelines(contents)           
+
+    def export_kpoints(self, filename=None):
+        """export kpoints"""
+        contents = ['KPOINTS\n']
+        contents += str(len(self.values['kpoints']['list'])) + '\n'
+        contents += ['Cartesian\n']
+        for kpt, wt in zip(self.values['kpoints']['list'], self.values['kpoints']['weights']):
+            #k1, k2, k3 = kpt
+            #print(type(k1), type(wt))
+            content = "{:10.4f} {:10.4f} {:10.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], wt[0])
+            #content = kpt[0] + kpt[1] + kpt[2] + '   ' + wt
             if filename is None:
                print(content)
             else: 
@@ -416,18 +438,18 @@ if __name__ == "__main__":
     #-------------------------------- Options -------------------------
     parser = OptionParser()
     parser.add_option("-i", "--incar", dest="incar", metavar='incar file',
-                      help="export incar")
+                      help="export incar file")
     parser.add_option("-p", "--poscar", dest="poscar",
-                      help="export poscar", metavar="poscar file")
+                      help="export poscar file", metavar="poscar file")
     parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
                       help="export symmetrized cif")
     parser.add_option("-k", "--kpoints", dest="kpoints",
-                      help="kpoints list", metavar="kpoints file")
+                      help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot",
                       help="export dos plot", metavar="dos_plot")
     parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
-    parser.add_option("-f", "--showforce", dest="force",default='no',
+    parser.add_option("-f", "--showforce", dest="force", action='store_true',
                       help="show forces, default: no", metavar="dos_plot")
 
 
@@ -469,8 +491,8 @@ if __name__ == "__main__":
                 'functional': test.values['pseudo_potential']['functional']}
     df = pd.DataFrame(col_name)
     print(tabulate(df, headers='keys', tablefmt='psql'))
-  
-    if options.force == 'yes':
+    
+    if options.force: 
        col_name = {'lattice':test.values['finalpos']['basis'],
                    'stress (kbar)': test.values['calculation']['stress']}
        df = pd.DataFrame(col_name)
@@ -480,9 +502,11 @@ if __name__ == "__main__":
                    'force (eV/A)': test.values['calculation']['force']}
        df = pd.DataFrame(col_name)
        print(tabulate(df, headers='keys', tablefmt='psql'))
-     
+    
     if options.incar:
        test.export_incar(filename = options.incar)
+    elif options.kpoints:
+       test.export_kpoints(filename = options.kpoints)
     elif options.poscar:
        test.export_structure(filename = options.poscar)
     elif options.cif:

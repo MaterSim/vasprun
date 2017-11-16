@@ -381,13 +381,13 @@ class vasprun:
         else:
            self.values['metal'] = True
 
-    def show_eigenvalues_by_band(self, band=0):
-        efermi = self.values["calculation"]["efermi"]
-        eigens = np.array(self.values['calculation']['eigenvalues'])
-        kpts = self.values['kpoints']['list']
-        print('       Kpoints            Eigenvalues')
-        for kpt, eig in zip(kpts, eigens[:,band,0]):
-            print("{:8.4f} {:8.4f} {:8.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], eig-efermi))
+    #def show_eigenvalues_by_band(self, band=0):
+    #    efermi = self.values["calculation"]["efermi"]
+    #    eigens = np.array(self.values['calculation']['eigenvalues'])
+    #    kpts = self.values['kpoints']['list']
+    #    print('       Kpoints            Eigenvalues')
+    #    for kpt, eig in zip(kpts, eigens[:,band,0]):
+    #        print("{:8.4f} {:8.4f} {:8.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], eig-efermi))
            
         
     def export_incar(self, filename=None):
@@ -522,7 +522,14 @@ if __name__ == "__main__":
     elif options.cif:
        test.export_structure(filename = options.cif, fileformat='cif')
     elif options.band:
+       kpts = test.values['kpoints']['list']
+       efermi = test.values["calculation"]["efermi"]
+       eigs = np.array(test.values['calculation']['eigenvalues']) - efermi
+       col_name = {'KPOINTS':kpts, 'Eigenvalues':eigs[:,options.band-1,0]}
        #test.export_structure(filename = options.cif, fileformat='cif')
-       test.show_eigenvalues_by_band(options.band-1) #python starts from 0
+       #test.show_eigenvalues_by_band(options.band-1) #python starts from 0
+       df = pd.DataFrame(col_name)
+       df = df.sort_values('Eigenvalues', ascending=[True])
+       print(tabulate(df, headers='keys', tablefmt='psql'))
 
     #pprint(test.values)

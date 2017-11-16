@@ -380,6 +380,15 @@ class vasprun:
               self.values['metal'] = True
         else:
            self.values['metal'] = True
+
+    def show_eigenvalues_by_band(self, band=0):
+        efermi = self.values["calculation"]["efermi"]
+        eigens = np.array(self.values['calculation']['eigenvalues'])
+        kpts = self.values['kpoints']['list']
+        print('       Kpoints            Eigenvalues')
+        for kpt, eig in zip(kpts, eigens[:,band,0]):
+            print("{:8.4f} {:8.4f} {:8.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], eig-efermi))
+           
         
     def export_incar(self, filename=None):
         """export incar"""
@@ -451,7 +460,8 @@ if __name__ == "__main__":
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
                       help="show forces, default: no", metavar="dos_plot")
-
+    parser.add_option("-e", "--eigenvalues", dest="band", type='int',
+                      help="show eigenvalues by band", metavar="dos_plot")
 
 
     (options, args) = parser.parse_args()    
@@ -511,5 +521,8 @@ if __name__ == "__main__":
        test.export_structure(filename = options.poscar)
     elif options.cif:
        test.export_structure(filename = options.cif, fileformat='cif')
+    elif options.band:
+       #test.export_structure(filename = options.cif, fileformat='cif')
+       test.show_eigenvalues_by_band(options.band-1) #python starts from 0
 
     #pprint(test.values)

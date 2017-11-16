@@ -378,8 +378,10 @@ class vasprun:
            self.values['vbm'] = vbm
            if self.values['gap'] < 0:
               self.values['metal'] = True
+              self.values['gap'] = 0
         else:
            self.values['metal'] = True
+           self.values['gap'] = 0
 
     #def show_eigenvalues_by_band(self, band=0):
     #    efermi = self.values["calculation"]["efermi"]

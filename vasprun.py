@@ -1,3 +1,5 @@
+#!/usr/bin/env  python
+# encoding: utf-8
 from lxml import etree
 from pymatgen.io.cif import CifWriter
 from pymatgen.io.vasp import Poscar

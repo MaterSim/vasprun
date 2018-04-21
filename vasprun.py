@@ -230,7 +230,10 @@ class vasprun:
                    text = ll[i].text.split()
                    label = text[1]
                    pot = text[0].split('_')[0]
-                   xc =  text[0].split('_')[1]
+                   try:
+                       xc =  text[0].split('_')[1]
+                   except:
+                       xc =  'unknown'
                    pseudo['labels'].append(label) 
                    pseudo['pot_type'].append(pot) 
                    pseudo['functional'].append(xc) 

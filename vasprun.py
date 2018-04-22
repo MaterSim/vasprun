@@ -7,9 +7,15 @@ from pymatgen import Structure
 import numpy as np 
 
 class vasprun:
-    """parse vasprun.xml and return all useful info to self.values"""
+    """
+    parse vasprun.xml and return all useful info to self.values
+    Args:
+    vasp_file: the path of vasprun.xml
+    verbosity: output error msgs or not
+    """
 
-    def __init__(self, vasp_file='vasprun.xml'):
+
+    def __init__(self, vasp_file='vasprun.xml', verbosity=0):
 
         self.error = False
         self.errormsg = ''
@@ -26,7 +32,7 @@ class vasprun:
             self.error = True
             self.errormsg = 'corrupted file found'
 
-        if self.error is True:
+        if verbosity > 0 and self.error is True:
             print("----------Warning---------------")
             print(self.errormsg)
             print("--------------------------------")

@@ -333,11 +333,7 @@ class vasprun:
     def get_bands(self):
         valence = self.values['valence']
         composition = self.values['composition']
-        total = 0
-        for atom, val in zip(composition.keys(), valence):
-            total += composition[atom]*val
-        
-        total = int(total)
+        total = int(self.values['parameters']['electronic']['NELECT'])
 
         if total%2 == 0:
            IBAND = int(total)/2

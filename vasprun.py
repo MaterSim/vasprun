@@ -485,8 +485,8 @@ if __name__ == "__main__":
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
                       help="show forces, default: no", metavar="dos_plot")
-    parser.add_option("-e", "--eigenvalues", dest="band", type='int',
-                      help="show eigenvalues by band", metavar="dos_plot")
+    parser.add_option("-e", "--eigenvalues", dest="band", action='store_true',
+                      help="show eigenvalues in valence/conduction band", metavar="dos_plot")
 
 
     (options, args) = parser.parse_args()    
@@ -550,4 +550,5 @@ if __name__ == "__main__":
         vb = test.values['bands']-1
         cb = vb + 1
         test.show_eigenvalues_by_band([vb, cb]) 
+        print('Minimum difference: ', min(test.eigenvalues_by_band(cb)-test.eigenvalues_by_band(vb)))
     #pprint(test.values)

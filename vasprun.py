@@ -331,15 +331,23 @@ class vasprun:
         return kpoints_dict
     
     def get_bands(self):
+        """
+        Function for computing the valence band index from the count of electrons
+        Args: 
+            None
+        Returns:
+            bands: an integer number
+            occupy: bool number 
+        """
         valence = self.values['valence']
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
 
         if total%2 == 0:
-           IBAND = int(total)/2
+           IBAND = int(total/2)
            occupy = True
         else:
-           IBAND = int(total)/2 + 1
+           IBAND = int(total/2) + 1
            occupy = False
 
         self.values["bands"] = IBAND
@@ -364,7 +372,7 @@ class vasprun:
 
     def get_band_gap(self):
         self.get_bands()
-        IBAND = int(self.values['bands'])
+        IBAND = self.values['bands']
         occupy = self.values['occupy']
         self.values['metal'] = False
         self.values['gap'] = None
@@ -390,14 +398,22 @@ class vasprun:
            self.values['metal'] = True
            self.values['gap'] = 0
 
-    #def show_eigenvalues_by_band(self, band=0):
-    #    efermi = self.values["calculation"]["efermi"]
-    #    eigens = np.array(self.values['calculation']['eigenvalues'])
-    #    kpts = self.values['kpoints']['list']
-    #    print('       Kpoints            Eigenvalues')
-    #    for kpt, eig in zip(kpts, eigens[:,band,0]):
-    #        print("{:8.4f} {:8.4f} {:8.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], eig-efermi))
-           
+    def eigenvalues_by_band(self, band=0):
+        efermi = self.values["calculation"]["efermi"]
+        eigens = np.array(self.values['calculation']['eigenvalues'])
+        return eigens[:,band,0] - efermi
+       
+       
+    def show_eigenvalues_by_band(self, bands=[0]):
+        kpts = self.values['kpoints']['list']
+        col_name =  {'K-points': kpts}
+        for i, band in enumerate(bands):
+            eigen = self.eigenvalues_by_band(band)
+            name = 'band'+str(i)
+            col_name[name] = eigen
+        df = pd.DataFrame(col_name)
+        print(tabulate(df, headers='keys', tablefmt='psql'))
+ 
         
     def export_incar(self, filename=None):
         """export incar"""
@@ -512,33 +528,26 @@ if __name__ == "__main__":
     print(tabulate(df, headers='keys', tablefmt='psql'))
     
     if options.force: 
-       col_name = {'lattice':test.values['finalpos']['basis'],
+        col_name = {'lattice':test.values['finalpos']['basis'],
                    'stress (kbar)': test.values['calculation']['stress']}
-       df = pd.DataFrame(col_name)
-       #pd.set_option('precision',4)
-       print(tabulate(df, headers='keys', tablefmt='psql'))
-       col_name = {'atom': test.values['finalpos']['positions'],
+        df = pd.DataFrame(col_name)
+        #pd.set_option('precision',4)
+        print(tabulate(df, headers='keys', tablefmt='psql'))
+        col_name = {'atom': test.values['finalpos']['positions'],
                    'force (eV/A)': test.values['calculation']['force']}
-       df = pd.DataFrame(col_name)
-       print(tabulate(df, headers='keys', tablefmt='psql'))
+        df = pd.DataFrame(col_name)
+        print(tabulate(df, headers='keys', tablefmt='psql'))
     
     if options.incar:
-       test.export_incar(filename = options.incar)
+        test.export_incar(filename = options.incar)
     elif options.kpoints:
-       test.export_kpoints(filename = options.kpoints)
+        test.export_kpoints(filename = options.kpoints)
     elif options.poscar:
-       test.export_structure(filename = options.poscar)
+        test.export_structure(filename = options.poscar)
     elif options.cif:
-       test.export_structure(filename = options.cif, fileformat='cif')
+        test.export_structure(filename = options.cif, fileformat='cif')
     elif options.band:
-       kpts = test.values['kpoints']['list']
-       efermi = test.values["calculation"]["efermi"]
-       eigs = np.array(test.values['calculation']['eigenvalues']) - efermi
-       col_name = {'KPOINTS':kpts, 'Eigenvalues':eigs[:,options.band-1,0]}
-       #test.export_structure(filename = options.cif, fileformat='cif')
-       #test.show_eigenvalues_by_band(options.band-1) #python starts from 0
-       df = pd.DataFrame(col_name)
-       df = df.sort_values('Eigenvalues', ascending=[True])
-       print(tabulate(df, headers='keys', tablefmt='psql'))
-
+        vb = test.values['bands']-1
+        cb = vb + 1
+        test.show_eigenvalues_by_band([vb, cb]) 
     #pprint(test.values)

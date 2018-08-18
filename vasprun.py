@@ -169,9 +169,10 @@ class vasprun:
     @staticmethod
     def assign_type(type, content):
         if type == "logical":
-            if type in ('T', 'True', 'true'):
+            content = content.replace(" ","")
+            if content in ('T', 'True', 'true'):
                 return True
-            elif type in ('F', 'False', 'false'):
+            elif content in ('F', 'False', 'false'):
                 return False
             else:
                 Warning("logical text " + content + " not T, True, true, F, False, false, set to False")
@@ -275,6 +276,7 @@ class vasprun:
                         name2 = ii.attrib.get("name")
                         d2 = self.parse_i_tag_collection(ii)
                         parameters[name][name2]=d2
+                        print(d2)
         return parameters
 
     def parse_eigenvalue(self, eigenvalue):

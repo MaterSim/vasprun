@@ -349,7 +349,7 @@ class vasprun:
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
         
-        if self.values['parameters']['electronic']['electronic spin']['LSORBIT'] == 'T':
+        if self.values['parameters']['electronic']['electronic spin']['LSORBIT']:
            fac = 1
         else:
            fac = 2

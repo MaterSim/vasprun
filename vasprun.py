@@ -270,6 +270,11 @@ class vasprun:
                 name = i.attrib.get("name")
                 d = self.parse_i_tag_collection(i)
                 parameters[name]=d
+                for ii in i:
+                    if ii.tag == "separator":
+                        name2 = ii.attrib.get("name")
+                        d2 = self.parse_i_tag_collection(ii)
+                        parameters[name][name2]=d2
         return parameters
 
     def parse_eigenvalue(self, eigenvalue):
@@ -342,12 +347,17 @@ class vasprun:
         valence = self.values['valence']
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
+        
+        if self.values['parameters']['electronic']['electronic spin']['LSORBIT'] == 'T':
+           fac = 1
+        else:
+           fac = 2
 
         if total%2 == 0:
-           IBAND = int(total/2)
+           IBAND = int(total/fac)
            occupy = True
         else:
-           IBAND = int(total/2) + 1
+           IBAND = int(total/fac) + 1
            occupy = False
 
         self.values["bands"] = IBAND
@@ -549,6 +559,13 @@ if __name__ == "__main__":
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1
-        test.show_eigenvalues_by_band([vb, cb]) 
-        print('Minimum difference: ', min(test.eigenvalues_by_band(cb)-test.eigenvalues_by_band(vb)))
-    #pprint(test.values)
+        test.show_eigenvalues_by_band([vb, cb])
+        cbs = test.eigenvalues_by_band(cb)
+        vbs = test.eigenvalues_by_band(vb)
+        ID = np.argmin(cbs-vbs)
+        print("Eigenvalue at CBM: ", min(cbs))
+        print("Eigenvalue at VBM: ", max(vbs))
+        print("minimum gap at : ", test.values['kpoints']['list'][ID])
+        print("CB: ", cbs[ID])
+        print("VB: ", vbs[ID])
+        print("diff: ", cbs[ID]-vbs[ID])

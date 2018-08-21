@@ -482,13 +482,13 @@ if __name__ == "__main__":
     #------------------------------------------------------------------
     #-------------------------------- Options -------------------------
     parser = OptionParser()
-    parser.add_option("-i", "--incar", dest="incar", metavar='incar file',
+    parser.add_option("-i", "--incar", dest="incar", metavar='incar file',action='store_true',
                       help="export incar file")
     parser.add_option("-p", "--poscar", dest="poscar",
                       help="export poscar file", metavar="poscar file")
     parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
                       help="export symmetrized cif")
-    parser.add_option("-k", "--kpoints", dest="kpoints",
+    parser.add_option("-k", "--kpoints", dest="kpoints", action='store_true',
                       help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot",
                       help="export dos plot", metavar="dos_plot")
@@ -496,6 +496,8 @@ if __name__ == "__main__":
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
                       help="show forces, default: no", metavar="dos_plot")
+    parser.add_option("-a", "--allparameters", dest="parameters", action='store_true',
+                      help="show forces, default: no", metavar="parameter")
     parser.add_option("-e", "--eigenvalues", dest="band", action='store_true',
                       help="show eigenvalues in valence/conduction band", metavar="dos_plot")
 
@@ -557,6 +559,8 @@ if __name__ == "__main__":
         test.export_structure(filename = options.poscar)
     elif options.cif:
         test.export_structure(filename = options.cif, fileformat='cif')
+    elif options.parameters:
+        pprint(test.values['parameters'])
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

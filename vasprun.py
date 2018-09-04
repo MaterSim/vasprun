@@ -5,6 +5,7 @@ from pymatgen.io.cif import CifWriter
 from pymatgen.io.vasp import Poscar
 from pymatgen import Structure
 import numpy as np 
+import warnings
 
 class vasprun:
     """

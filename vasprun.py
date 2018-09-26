@@ -17,7 +17,6 @@ class vasprun:
 
 
     def __init__(self, vasp_file='vasprun.xml', verbosity=0):
-
         self.error = False
         self.errormsg = ''
         self.values = {}
@@ -44,7 +43,7 @@ class vasprun:
         incar
         kpoints
         atominfo - composition, elements, formula
-        calculation - eigenvalues, energy, fermi energy, stress, force
+        calculation - eigenvalues, energy, dos, fermi energy, stress, force
         finalpos - lattice, rec_lat, positions
         """
 
@@ -279,12 +278,26 @@ class vasprun:
                         parameters[name][name2]=d2
         return parameters
 
+
     def parse_eigenvalue(self, eigenvalue):
         eigenvalues = []
         for s in eigenvalue.find("array").find("set").findall("set"):
             for ss in s.findall("set"):
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
         return eigenvalues
+
+
+    def parse_dos(self, dos):
+        t_dos = []
+        p_dos = []
+        for s in dos.find("total").find("array").findall("set"): #.findall("set"):
+            for ss in s.findall("set"):
+                t_dos.append(self.parse_varray_pymatgen(ss))
+        for s in dos.find("partial").find("array").findall("set"): #.findall("set"):
+            for ss in s.findall("set"):
+                p_dos.append(self.parse_varray_pymatgen(ss))
+
+        return t_dos, p_dos
 
     def parse_calculation(self, calculation):
         stress = []
@@ -293,6 +306,9 @@ class vasprun:
         eigenvalues = []
         energy = 0.0
         scf_count = 0
+        tdos = []
+        pdos = []
+
         for i in calculation.iterchildren():
             if i.attrib.get("name") == "stress":
                 stress = self.parse_varray(i)
@@ -303,6 +319,7 @@ class vasprun:
                     if j.attrib.get("name") == "efermi":
                         efermi = float(j.text)
                         break
+                tdos, pdos = self.parse_dos(i)
             elif i.tag == "eigenvalues":
                 eigenvalues = self.parse_eigenvalue(i)
             elif i.tag == "scstep":
@@ -325,6 +342,9 @@ class vasprun:
         calculation["force"] = force
         calculation["eigenvalues"] = eigenvalues
         calculation["energy"] = energy
+        calculation["tdos"] = tdos
+        calculation["pdos"] = pdos
+
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
@@ -473,6 +493,35 @@ class vasprun:
         else:
            CifWriter(struc, symprec=0.01).write_file(filename)
 
+    def plot_dos(self, filename='dos.png', options='t', xlim=[-3, 3]):
+        """export dos"""
+        import matplotlib as mpl
+        mpl.use("Agg")
+        import matplotlib.pyplot as plt
+        plt.style.use("bmh")
+
+        efermi = self.values['calculation']['efermi']
+        tdos = np.array(self.values['calculation']['tdos'][0])
+        tdos[:, 0] -= efermi
+        e = tdos[:, 0]
+        rows = (e > xlim[0]) & (e < xlim[1])
+        e = e[rows]
+
+        if options.find('t')>=0:
+            tdos = tdos[rows, :]
+            plt.plot(e, tdos[:,1], label='total')
+
+        #if options.find('spd')>=0: #by s/p/d
+        #    pdos = np.array(self.values['calculation']['pdos'][0])[rows, :]
+        #    plt.plot(self.pdos[:,0], self.pdos[:,1], lable='total')
+        #else: # by atom
+        #    tdos
+        
+        plt.legend()
+        plt.xlabel("Energy (eV)")
+        plt.ylabel("DOS")
+        plt.savefig(filename)
+
 from pprint import pprint
 from optparse import OptionParser
 import pandas as pd
@@ -562,6 +611,8 @@ if __name__ == "__main__":
         test.export_structure(filename = options.cif, fileformat='cif')
     elif options.parameters:
         pprint(test.values['parameters'])
+    elif options.dosplot:
+        test.plot_dos(filename = options.dosplot)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

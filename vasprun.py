@@ -547,7 +547,7 @@ if __name__ == "__main__":
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
                       help="show forces, default: no", metavar="dos_plot")
     parser.add_option("-a", "--allparameters", dest="parameters", action='store_true',
-                      help="show forces, default: no", metavar="parameter")
+                      help="show all parameters", metavar="parameter")
     parser.add_option("-e", "--eigenvalues", dest="band", action='store_true',
                       help="show eigenvalues in valence/conduction band", metavar="dos_plot")
 

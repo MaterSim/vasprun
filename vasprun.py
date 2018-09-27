@@ -284,8 +284,6 @@ class vasprun:
         for s in eigenvalue.find("array").find("set").findall("set"):
             for ss in s.findall("set"):
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
-        print(len(eigenvalues))
-        print(len(eigenvalues[0]))
         return eigenvalues
 
 
@@ -636,9 +634,12 @@ if __name__ == "__main__":
         cbs = test.eigenvalues_by_band(cb)
         vbs = test.eigenvalues_by_band(vb)
         ID = np.argmin(cbs-vbs)
-        print("Eigenvalue at CBM: ", min(cbs))
-        print("Eigenvalue at VBM: ", max(vbs))
-        print("minimum gap at : ", test.values['kpoints']['list'][ID])
-        print("CB: ", cbs[ID])
-        print("VB: ", vbs[ID])
-        print("diff: ", cbs[ID]-vbs[ID])
+        if len(cbs) == len(test.values['kpoints']['list']):
+            print("Eigenvalue at CBM: ", min(cbs))
+            print("Eigenvalue at VBM: ", max(vbs))
+            print("minimum gap at : ", test.values['kpoints']['list'][ID])
+            print("CB: ", cbs[ID])
+            print("VB: ", vbs[ID])
+            print("diff: ", cbs[ID]-vbs[ID])
+        else:
+            print("This is spin calculation")

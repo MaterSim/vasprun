@@ -284,6 +284,8 @@ class vasprun:
         for s in eigenvalue.find("array").find("set").findall("set"):
             for ss in s.findall("set"):
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
+        print(len(eigenvalues))
+        print(len(eigenvalues[0]))
         return eigenvalues
 
 
@@ -436,15 +438,22 @@ class vasprun:
         return eigens[:,band,0] - efermi
        
        
-    def show_eigenvalues_by_band(self, bands=[0]):
+    def show_eigenvalues_by_band(self, bands=[0], spin=True):
         kpts = self.values['kpoints']['list']
         col_name =  {'K-points': kpts}
         for i, band in enumerate(bands):
             eigen = self.eigenvalues_by_band(band)
-            name = 'band'+str(i)
-            col_name[name] = eigen
+            if spin:
+                eigens = np.reshape(eigen, [int(len(eigen)/2), 2])
+                name1 = 'band' + str(i) + 'up'
+                name2 = 'band' + str(i) + 'down'
+                col_name[name1] = eigens[:, 0]
+                col_name[name2] = eigens[:, 1]
+            else:
+                name = 'band'+str(i)
+                col_name[name] = eigen
         df = pd.DataFrame(col_name)
-        print(tabulate(df, headers='keys', tablefmt='psql'))
+        print(df)
  
         
     def export_incar(self, filename=None):
@@ -508,8 +517,14 @@ class vasprun:
         e = e[rows]
 
         if options.find('t')>=0:
-            tdos = tdos[rows, :]
-            plt.plot(e, tdos[:,1], label='total')
+            if len(self.values['calculation']['tdos']) == 1:
+                tdos = tdos[rows, :]
+                plt.plot(e, tdos[:,1], label='total')
+            else:
+                tdos1 = np.array(self.values['calculation']['tdos'][0])
+                tdos2 = np.array(self.values['calculation']['tdos'][1])
+                plt.plot(e, tdos1[rows,1], label='total-up')
+                plt.plot(e, -1*tdos2[rows,1], label='total-down')
 
         #if options.find('spd')>=0: #by s/p/d
         #    pdos = np.array(self.values['calculation']['pdos'][0])[rows, :]
@@ -614,6 +629,7 @@ if __name__ == "__main__":
     elif options.dosplot:
         test.plot_dos(filename = options.dosplot)
     elif options.band:
+        #print(test.values['bands'])
         vb = test.values['bands']-1
         cb = vb + 1
         test.show_eigenvalues_by_band([vb, cb])

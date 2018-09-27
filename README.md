@@ -1,10 +1,11 @@
 # vasprun
-This repo is primarily used for extract useful information from vasprun.xml and postprocess data such as
+This repo used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
+
 - band gap calculation
-- dos plot
+- dos plot (total dos, needs to add partial dos)
 - incar/potcar/poscar generation
 - force analysys
-- eigenvalue analysys
+- eigenvalue analysys (needs to add more)
 
 ## Prerequisites
 To use it, one must have python 3 installed. It is recommended to install conda if one don't have root access in his computer.

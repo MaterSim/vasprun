@@ -508,6 +508,8 @@ class vasprun:
         import matplotlib as mpl
         mpl.use("Agg")
         import matplotlib.pyplot as plt
+        from matplotlib import rcParams
+        rcParams.update({'figure.autolayout': True})
         plt.style.use("bmh")
 
         efermi = self.values['calculation']['efermi']

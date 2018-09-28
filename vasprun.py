@@ -532,7 +532,7 @@ class vasprun:
                 N_atom = len(self.values["name_array"])
                 if len(pdos) == N_atom:
                     pdos = np.array(pdos)
-                    spd = pdos[0, :, :]
+                    spd = pdos[0, :, :] 
                     for i in range(1, N_atom):
                         spd += pdos[i, :, :]
                     s = spd[rows, 1]
@@ -584,12 +584,14 @@ class vasprun:
             else:
                 lines1 += ax.plot(e, data)#, label=label)
                 labels1.append(label)
-        ax.legend(lines1, [label for label in labels1], loc='upper right')
+        leg1 = ax.legend(lines1, [label for label in labels1], fancybox=True, loc='upper right')
+        leg1.get_frame().set_alpha(0.5)
         if len(lines2) > 0:
             from matplotlib.legend import Legend
-            leg = Legend(ax, lines2, [label for label in labels2], loc='lower right')
+            leg2 = Legend(ax, lines2, [label for label in labels2], fancybox=True, loc='lower right')
+            ax.add_artist(leg2)
+            leg2.get_frame().set_alpha(0.5)
 
-        ax.add_artist(leg)
         plt.xlabel("Energy (eV)")
         plt.ylabel("DOS")
         plt.xlim(xlim)

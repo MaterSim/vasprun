@@ -24,23 +24,26 @@ Usage: vasprun.py [options]
 
 Options:
   -h, --help            show this help message and exit
-  -i incar file, --incar=incar file
-                        export incar
+  -i, --incar           export incar file
   -p poscar file, --poscar=poscar file
-                        export poscar
+                        export poscar file
   -c cif file, --cif=cif file
                         export symmetrized cif
-  -k kpoints file, --kpoints=kpoints file
-                        kpoints list
+  -k, --kpoints         kpoints file
   -d dos_plot, --dosplot=dos_plot
-                        export dos plot
+                        export dos plot, options: t, spd, a, a-Si, a-1
   -v vasprun, --vasprun=vasprun
-                        path of vasprun.xml file, default='vasprun.xml'
-  -f dos_plot, --showforce=dos_plot
-                        dos plot
+                        path of vasprun.xml file, default: vasprun.xml
+  -f, --showforce       show forces, default: no
+  -a, --allparameters   show all parameters
+  -e, --eigenvalues     show eigenvalues in valence/conduction band
+  -s smearing, --smear=smearing
+                        smearing parameter for dos plot, e.g., 0.1 A
+  -n dosfig, --dosfig=dosfig
+                        dos figure name, default: dos.png
 ```
 
-$ python vasprun.py -f yes
+$ python vasprun.py -v vasprun.xml -f yes
 
 ```
 formula :   Sc4C4
@@ -76,3 +79,10 @@ gap :   -0.4621
 +----+--------------------------+---------------------------------+
 
 ```
+```
+
+$ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png
+
+```
+It will geneate a dos-spd.png figure like the following:
+![dos.png](https://github.com/qzhu2017/vasprun/blob/master/images/dos.png)

@@ -1,11 +1,30 @@
 #!/usr/bin/env  python
 # encoding: utf-8
+from scipy.ndimage.filters import gaussian_filter1d
 from lxml import etree
 from pymatgen.io.cif import CifWriter
 from pymatgen.io.vasp import Poscar
 from pymatgen import Structure
-import numpy as np 
+import numpy as np
 import warnings
+from pprint import pprint
+from optparse import OptionParser
+import pandas as pd
+from tabulate import tabulate
+
+
+def smear_data(data, sigma):
+    """
+    Apply Gaussian smearing to spectrum y value.
+
+    Args:
+        sigma: Std dev for Gaussian smear function
+    """
+    diff = [data[i + 1, 0] - data[i, 0] for i in range(len(data) - 1)]
+    avg_x_per_step = np.sum(diff) / len(diff)
+    data[:, 1] = gaussian_filter1d(data[:, 1], sigma / avg_x_per_step)
+    return data
+
 
 class vasprun:
     """
@@ -14,8 +33,6 @@ class vasprun:
     vasp_file: the path of vasprun.xml
     verbosity: output error msgs or not
     """
-
-
     def __init__(self, vasp_file='vasprun.xml', verbosity=0):
         self.error = False
         self.errormsg = ''
@@ -36,7 +53,7 @@ class vasprun:
             print("----------Warning---------------")
             print(self.errormsg)
             print("--------------------------------")
-   
+
     def parse_vaspxml(self, xml_object):
         """
         parse the following tags
@@ -48,33 +65,33 @@ class vasprun:
         """
 
         for child in xml_object.iterchildren():
-           self.values.setdefault(child.tag, {})
-           if child.tag == "incar":
-               self.values[child.tag] = self.parse_i_tag_collection(child)
-           elif child.tag == "kpoints":
-               self.values[child.tag] = self.parse_kpoints(child)
-           elif child.tag == "parameters":
-               self.values[child.tag] = self.parse_parameters(child)
-           elif child.tag == "atominfo":
-               self.values["name_array"] = self.parse_name_array(child)
-               self.values["composition"] = self.parse_composition(child)
-               self.values["elements"] = self.get_element(self.values["composition"])
-               self.values["formula"] = self.get_formula(self.values["composition"])
-               self.values["pseudo_potential"], self.values["potcar_symbols"], \
-               self.values["valence"], self.values["mass"] = \
+            self.values.setdefault(child.tag, {})
+            if child.tag == "incar":
+                self.values[child.tag] = self.parse_i_tag_collection(child)
+            elif child.tag == "kpoints":
+                self.values[child.tag] = self.parse_kpoints(child)
+            elif child.tag == "parameters":
+                self.values[child.tag] = self.parse_parameters(child)
+            elif child.tag == "atominfo":
+                self.values["name_array"] = self.parse_name_array(child)
+                self.values["composition"] = self.parse_composition(child)
+                self.values["elements"] = self.get_element(self.values["composition"])
+                self.values["formula"] = self.get_formula(self.values["composition"])
+                self.values["pseudo_potential"], self.values["potcar_symbols"], \
+                self.values["valence"], self.values["mass"] = \
                                         self.get_potcar(child)
-           elif child.tag == "calculation":
-               self.values["calculation"], scf_count = self.parse_calculation(child)
-               if self.values['parameters']['response functions']['NELM'] == scf_count:
-                   self.error = True
-                   self.errormsg = 'SCF is not converged'
-           elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
-               self.values["finalpos"] = self.parse_finalpos(child)
-           elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
-               self.values[child.tag] = self.parse_vaspxml(child)
-           #else:
-           #    return 1
-           self.dict_clean(self.values)
+            elif child.tag == "calculation":
+                self.values["calculation"], scf_count = self.parse_calculation(child)
+                if self.values['parameters']['response functions']['NELM'] == scf_count:
+                    self.error = True
+                    self.errormsg = 'SCF is not converged'
+            elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
+                self.values["finalpos"] = self.parse_finalpos(child)
+            elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
+                self.values[child.tag] = self.parse_vaspxml(child)
+            # else:
+            #    return 1
+            self.dict_clean(self.values)
 
     @staticmethod
     def dict_clean(dict_del):
@@ -101,9 +118,7 @@ class vasprun:
         for i in finalpos.iter("varray"):
             name = i.attrib.get("name")
             d[name] = self.parse_varray(i)
-
         return d
-
 
     def parse_i_tag_collection(self, itags_collection):
         d = {}
@@ -113,7 +128,7 @@ class vasprun:
             content = info.text
             d[name] = self.assign_type(type, content)
         return d
-   
+
     @staticmethod
     def parse_varray_pymatgen(elem):
         def _vasprun_float(f):
@@ -130,11 +145,11 @@ class vasprun:
                     return np.nan
                 raise e
         if elem.get("type", None) == 'logical':
-            m = [[True if i=='T' else False for i in v.text.split()] for v in elem]
+            m = [[True if i == 'T' else False for i in v.text.split()] for v in elem]
         else:
             m = [[_vasprun_float(i) for i in v.text.split()] for v in elem]
 
-        return m       
+        return m
 
     @staticmethod
     def parse_varray(varray):
@@ -169,7 +184,7 @@ class vasprun:
     @staticmethod
     def assign_type(type, content):
         if type == "logical":
-            content = content.replace(" ","")
+            content = content.replace(" ", "")
             if content in ('T', 'True', 'true'):
                 return True
             elif content in ('F', 'False', 'false'):
@@ -181,7 +196,7 @@ class vasprun:
             return int(content) if len(content.split()) == 1 else [int(number) for number in content.split()]
         elif type == "string":
             return content
-        elif type == None:
+        elif type is None:
             return float(content) if len(content.split()) == 1 else [float(number) for number in content.split()]
         else:
             Warning("New type: " + type + ", set to string")
@@ -218,34 +233,33 @@ class vasprun:
         return formula
 
     def get_potcar(self, child):
-        #{'labels': ['O', 'Sr_sv'], 'pot_type': 'paw', 'functional': 'pbe'}
-        #['PAW_PBE', 'N', '08Apr2002']
-        pseudo = {'labels': [], 'pot_type':[], 'functional': []}
+        # {'labels': ['O', 'Sr_sv'], 'pot_type': 'paw', 'functional': 'pbe'}
+        # ['PAW_PBE', 'N', '08Apr2002']
+        pseudo = {'labels': [], 'pot_type': [], 'functional': []}
         potcar_symbol = []
         valence = []
         mass = []
         for i in child.iterchildren():
             if i.tag == "array" and i.attrib.get("name") == 'atomtypes':
-               ll = list(i.iter('c'))
-               for i in range(3,len(ll),5):
-                   valence.append(float(ll[i].text))
+                ll = list(i.iter('c'))
+                for i in range(3, len(ll), 5):
+                    valence.append(float(ll[i].text))
 
-               for i in range(2,len(ll),5):
-                   mass.append(float(ll[i].text))
+                for i in range(2, len(ll), 5):
+                    mass.append(float(ll[i].text))
 
-               for i in range(4,len(ll),5):
-                   text = ll[i].text.split()
-                   label = text[1]
-                   pot = text[0].split('_')[0]
-                   try:
-                       xc =  text[0].split('_')[1]
-                   except:
-                       xc =  'unknown'
-                   pseudo['labels'].append(label) 
-                   pseudo['pot_type'].append(pot) 
-                   pseudo['functional'].append(xc) 
-                   potcar_symbol.append(xc + ' ' + label)
-        #print(type(valence[0]))          
+                for i in range(4, len(ll), 5):
+                    text = ll[i].text.split()
+                    label = text[1]
+                    pot = text[0].split('_')[0]
+                    try:
+                        xc = text[0].split('_')[1]
+                    except:
+                        xc = 'unknown'
+                    pseudo['labels'].append(label)
+                    pseudo['pot_type'].append(pot)
+                    pseudo['functional'].append(xc)
+                    potcar_symbol.append(xc + ' ' + label)
         return pseudo, potcar_symbol, valence, mass
 
     @staticmethod
@@ -270,14 +284,13 @@ class vasprun:
             if i.tag == "separator":
                 name = i.attrib.get("name")
                 d = self.parse_i_tag_collection(i)
-                parameters[name]=d
+                parameters[name] = d
                 for ii in i:
                     if ii.tag == "separator":
                         name2 = ii.attrib.get("name")
                         d2 = self.parse_i_tag_collection(ii)
-                        parameters[name][name2]=d2
+                        parameters[name][name2] = d2
         return parameters
-
 
     def parse_eigenvalue(self, eigenvalue):
         eigenvalues = []
@@ -286,17 +299,15 @@ class vasprun:
                 eigenvalues.append(self.parse_varray_pymatgen(ss))
         return eigenvalues
 
-
     def parse_dos(self, dos):
         t_dos = []
         p_dos = []
-        for s in dos.find("total").find("array").findall("set"): #.findall("set"):
+        for s in dos.find("total").find("array").findall("set"):
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
-        for s in dos.find("partial").find("array").findall("set"): #.findall("set"):
+        for s in dos.find("partial").find("array").findall("set"):
             for ss in s.findall("set"):
                 p_dos.append(self.parse_varray_pymatgen(ss))
-
         return t_dos, p_dos
 
     def parse_calculation(self, calculation):
@@ -327,7 +338,7 @@ class vasprun:
                     if j.tag == 'energy':
                         for e in j.findall("i"):
                             if e.attrib.get("name") == "e_fr_energy":
-                               scf_count +=1
+                                scf_count += 1
 
             elif i.tag == "energy":
                 for e in i.findall("i"):
@@ -348,7 +359,7 @@ class vasprun:
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
-        kpoints_dict = {'list':[], 'weights':[]}
+        kpoints_dict = {'list': [], 'weights': []}
         for va in kpoints.findall("varray"):
             name = va.attrib["name"]
             if name == "kpointlist":
@@ -356,51 +367,48 @@ class vasprun:
             elif name == "weights":
                 kpoints_dict['weights'] = self.parse_varray(va)
         return kpoints_dict
-    
+
     def get_bands(self):
         """
         Function for computing the valence band index from the count of electrons
-        Args: 
+        Args:
             None
         Returns:
             bands: an integer number
-            occupy: bool number 
+            occupy: bool number
         """
         valence = self.values['valence']
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
-        
-        if self.values['parameters']['electronic']['electronic spin']['LSORBIT']:
-           fac = 1
-        else:
-           fac = 2
 
-        if total%2 == 0:
-           IBAND = int(total/fac)
-           occupy = True
+        if self.values['parameters']['electronic']['electronic spin']['LSORBIT']:
+            fac = 1
         else:
-           IBAND = int(total/fac) + 1
-           occupy = False
+            fac = 2
+
+        if total % 2 == 0:
+            IBAND = int(total/fac)
+            occupy = True
+        else:
+            IBAND = int(total/fac) + 1
+            occupy = False
 
         self.values["bands"] = IBAND
         self.values["occupy"] = occupy
 
     @staticmethod
     def get_cbm(kpoints, efermi, eigens, IBAND):
-
-        ind = np.argmin(eigens[:, IBAND, 0]) 
+        ind = np.argmin(eigens[:, IBAND, 0])
         pos = kpoints[ind]
         value = eigens[ind, IBAND, 0] - efermi
-        return {'kpoint': pos, 'value':value}
+        return {'kpoint': pos, 'value': value}
 
     @staticmethod
     def get_vbm(kpoints, efermi, eigens, IBAND):
-        
-        ind = np.argmax(eigens[:, IBAND, 0]) 
+        ind = np.argmax(eigens[:, IBAND, 0])
         pos = kpoints[ind]
         value = eigens[ind, IBAND, 0] - efermi
-
-        return {'kpoint': pos, 'value':value}
+        return {'kpoint': pos, 'value': value}
 
     def get_band_gap(self):
         self.get_bands()
@@ -410,35 +418,33 @@ class vasprun:
         self.values['gap'] = None
         self.values['cbm'] = None
         self.values['vbm'] = None
-
         if occupy is True:
-           efermi = self.values["calculation"]["efermi"] 
-           eigens = np.array(self.values['calculation']['eigenvalues'])
-           kpoints= np.array(self.values['kpoints']['list'])
-           if np.shape(eigens)[0] > np.shape(kpoints)[0]:
-              kpoints = np.tile(kpoints, [2,1]) 
+            efermi = self.values["calculation"]["efermi"]
+            eigens = np.array(self.values['calculation']['eigenvalues'])
+            kpoints = np.array(self.values['kpoints']['list'])
+            if np.shape(eigens)[0] > np.shape(kpoints)[0]:
+                kpoints = np.tile(kpoints, [2, 1])
 
-           cbm = self.get_cbm(kpoints, efermi, eigens, IBAND)
-           vbm = self.get_vbm(kpoints, efermi, eigens, IBAND-1)
-           self.values['gap'] = cbm['value'] - vbm['value']
-           self.values['cbm'] = cbm
-           self.values['vbm'] = vbm
-           if self.values['gap'] < 0:
-              self.values['metal'] = True
-              self.values['gap'] = 0
+            cbm = self.get_cbm(kpoints, efermi, eigens, IBAND)
+            vbm = self.get_vbm(kpoints, efermi, eigens, IBAND-1)
+            self.values['gap'] = cbm['value'] - vbm['value']
+            self.values['cbm'] = cbm
+            self.values['vbm'] = vbm
+            if self.values['gap'] < 0:
+                self.values['metal'] = True
+                self.values['gap'] = 0
         else:
-           self.values['metal'] = True
-           self.values['gap'] = 0
+            self.values['metal'] = True
+            self.values['gap'] = 0
 
     def eigenvalues_by_band(self, band=0):
         efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eigenvalues'])
-        return eigens[:,band,0] - efermi
-       
-       
+        return eigens[:, band, 0] - efermi
+
     def show_eigenvalues_by_band(self, bands=[0], spin=True):
         kpts = self.values['kpoints']['list']
-        col_name =  {'K-points': kpts}
+        col_name = {'K-points': kpts}
         for i, band in enumerate(bands):
             eigen = self.eigenvalues_by_band(band)
             if spin:
@@ -452,21 +458,20 @@ class vasprun:
                 col_name[name] = eigen
         df = pd.DataFrame(col_name)
         print(df)
- 
-        
+
     def export_incar(self, filename=None):
         """export incar"""
         contents = []
         for key in self.values['incar'].keys():
-            content = key + ' = ' + str(self.values['incar'][key]) 
+            content = key + ' = ' + str(self.values['incar'][key])
             if filename is None:
-               print(content)
-            else: 
-               content += '\n'
-               contents.append(str(content))
+                print(content)
+            else:
+                content += '\n'
+                contents.append(str(content))
         if filename is not None:
             with open(filename, 'w') as f:
-                 f.writelines(contents)           
+                f.writelines(contents)
 
     def export_kpoints(self, filename=None):
         """export kpoints"""
@@ -474,33 +479,30 @@ class vasprun:
         contents += str(len(self.values['kpoints']['list'])) + '\n'
         contents += ['Cartesian\n']
         for kpt, wt in zip(self.values['kpoints']['list'], self.values['kpoints']['weights']):
-            #k1, k2, k3 = kpt
-            #print(type(k1), type(wt))
             content = "{:10.4f} {:10.4f} {:10.4f} {:10.4f}".format(kpt[0], kpt[1], kpt[2], wt[0])
-            #content = kpt[0] + kpt[1] + kpt[2] + '   ' + wt
             if filename is None:
-               print(content)
-            else: 
-               content += '\n'
-               contents.append(str(content))
+                print(content)
+            else:
+                content += '\n'
+                contents.append(str(content))
         if filename is not None:
             with open(filename, 'w') as f:
-                 f.writelines(contents)           
+                f.writelines(contents)
 
-    def export_structure(self, filename, fileformat = 'poscar'):
+    def export_structure(self, filename, fileformat='poscar'):
         """export incar"""
         atomNames = self.values["name_array"]
         latt = self.values["finalpos"]["basis"]
         pos = self.values["finalpos"]["positions"]
 
         struc = Structure(latt, atomNames, pos)
-        
-        if fileformat == 'poscar':
-           Poscar(struc).write_file(filename=filename)
-        else:
-           CifWriter(struc, symprec=0.01).write_file(filename)
 
-    def plot_dos(self, filename='dos.png', options='t', xlim=[-3, 3]):
+        if fileformat == 'poscar':
+            Poscar(struc).write_file(filename=filename)
+        else:
+            CifWriter(struc, symprec=0.01).write_file(filename)
+
+    def plot_dos(self, filename='dos.png', smear=None, options='t', xlim=[-3, 3]):
         """export dos"""
         import matplotlib as mpl
         mpl.use("Agg")
@@ -514,39 +516,36 @@ class vasprun:
         rows = (e > xlim[0]) & (e < xlim[1])
         e = e[rows]
 
-        if options.find('t')>=0:
+        if options.find('t') >= 0:
             if len(self.values['calculation']['tdos']) == 1:
                 tdos = tdos[rows, :]
-                plt.plot(e, tdos[:,1], label='total')
+                if smear is not None:
+                    tdos = smear_data(tdos, smear)
+                plt.plot(e, tdos[:, 1], label='total')
             else:
                 tdos1 = np.array(self.values['calculation']['tdos'][0])
                 tdos2 = np.array(self.values['calculation']['tdos'][1])
-                plt.plot(e, tdos1[rows,1], label='total-up')
-                plt.plot(e, -1*tdos2[rows,1], label='total-down')
+                if smear is not None:
+                    tdos1 = smear_data(tdos1, smear)
+                    tdos2 = smear_data(tdos2, smear)
+                plt.plot(e, tdos1[rows, 1], label='total-up')
+                plt.plot(e, -1*tdos2[rows, 1], label='total-down')
 
-        #if options.find('spd')>=0: #by s/p/d
+        # if options.find('spd')>=0: #by s/p/d
         #    pdos = np.array(self.values['calculation']['pdos'][0])[rows, :]
         #    plt.plot(self.pdos[:,0], self.pdos[:,1], lable='total')
-        #else: # by atom
+        # else: # by atom
         #    tdos
-        
         plt.legend()
         plt.xlabel("Energy (eV)")
         plt.ylabel("DOS")
         plt.savefig(filename)
 
-from pprint import pprint
-from optparse import OptionParser
-import pandas as pd
-from tabulate import tabulate
-
 
 if __name__ == "__main__":
-    #------------------------------------------------------------------
-    #-------------------------------- Options -------------------------
     parser = OptionParser()
-    parser.add_option("-i", "--incar", dest="incar", metavar='incar file',action='store_true',
-                      help="export incar file")
+    parser.add_option("-i", "--incar", dest="incar", action='store_true',
+                      help="export incar file", metavar='incar file')
     parser.add_option("-p", "--poscar", dest="poscar",
                       help="export poscar file", metavar="poscar file")
     parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
@@ -554,7 +553,7 @@ if __name__ == "__main__":
     parser.add_option("-k", "--kpoints", dest="kpoints", action='store_true',
                       help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot",
-                      help="export dos plot", metavar="dos_plot")
+                      help="export dos plot, e.g., dos.png", metavar="dos_plot")
     parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
@@ -563,71 +562,68 @@ if __name__ == "__main__":
                       help="show all parameters", metavar="parameter")
     parser.add_option("-e", "--eigenvalues", dest="band", action='store_true',
                       help="show eigenvalues in valence/conduction band", metavar="dos_plot")
+    parser.add_option("-s", "--smear", dest="smear", type='float',
+                      help="smearing parameter for dos plot, e.g., 0.1 A", metavar="smearing")
 
-
-    (options, args) = parser.parse_args()    
+    (options, args) = parser.parse_args()
     if options.vasprun is None:
-       test = vasprun()
+        test = vasprun()
     else:
-       test = vasprun(options.vasprun)
+        test = vasprun(options.vasprun)
 
-  
     # standard output
-    if test.values['parameters']['ionic']['NSW'] <=1:
-       print('This is a single point calculation')
-    #pprint(test.values['kpoints'])
+    if test.values['parameters']['ionic']['NSW'] <= 1:
+        print('This is a single point calculation')
+    # pprint(test.values['kpoints'])
 
     output = {'formula': None,
-              'calculation':['efermi','energy', 'energy_per_atom'],
+              'calculation': ['efermi', 'energy', 'energy_per_atom'],
               'metal': None,
               'gap': None}
     for tag in output.keys():
         if output[tag] is None:
-           print(tag, ':  ', test.values[tag])
+            print(tag, ':  ', test.values[tag])
         else:
-           for subtag in output[tag]:
-               print(subtag, ':  ', test.values[tag][subtag])
-    
-    #show VBM and CBM when it is nonmetal
-    if test.values['metal'] is False:
-       col_name = {'label': ['CBM', 'VBM'],
-                   'kpoint':     [test.values['cbm']['kpoint'], test.values['vbm']['kpoint']],
-                   'values':     [test.values['cbm']['value'], test.values['vbm']['value']]}
-       df = pd.DataFrame(col_name)
-       print(tabulate(df, headers='keys', tablefmt='psql'))
-   
+            for subtag in output[tag]:
+                print(subtag, ':  ', test.values[tag][subtag])
 
-    col_name = {'valence':    test.values['valence'],
-                'labels':     test.values['pseudo_potential']['labels'],
+    # show VBM and CBM when it is nonmetal
+    if test.values['metal'] is False:
+        col_name = {'label': ['CBM', 'VBM'],
+                    'kpoint': [test.values['cbm']['kpoint'], test.values['vbm']['kpoint']],
+                    'values': [test.values['cbm']['value'], test.values['vbm']['value']]}
+        df = pd.DataFrame(col_name)
+        print(tabulate(df, headers='keys', tablefmt='psql'))
+
+    col_name = {'valence': test.values['valence'],
+                'labels': test.values['pseudo_potential']['labels'],
                 'functional': test.values['pseudo_potential']['functional']}
     df = pd.DataFrame(col_name)
     print(tabulate(df, headers='keys', tablefmt='psql'))
-    
-    if options.force: 
-        col_name = {'lattice':test.values['finalpos']['basis'],
-                   'stress (kbar)': test.values['calculation']['stress']}
+
+    if options.force:
+        col_name = {'lattice': test.values['finalpos']['basis'],
+                    'stress (kbar)': test.values['calculation']['stress']}
         df = pd.DataFrame(col_name)
-        #pd.set_option('precision',4)
         print(tabulate(df, headers='keys', tablefmt='psql'))
         col_name = {'atom': test.values['finalpos']['positions'],
-                   'force (eV/A)': test.values['calculation']['force']}
+                    'force (eV/A)': test.values['calculation']['force']}
         df = pd.DataFrame(col_name)
         print(tabulate(df, headers='keys', tablefmt='psql'))
-    
+
     if options.incar:
-        test.export_incar(filename = options.incar)
+        test.export_incar(filename=options.incar)
     elif options.kpoints:
-        test.export_kpoints(filename = options.kpoints)
+        test.export_kpoints(filename=options.kpoints)
     elif options.poscar:
-        test.export_structure(filename = options.poscar)
+        test.export_structure(filename=options.poscar)
     elif options.cif:
-        test.export_structure(filename = options.cif, fileformat='cif')
+        test.export_structure(filename=options.cif, fileformat='cif')
     elif options.parameters:
         pprint(test.values['parameters'])
     elif options.dosplot:
-        test.plot_dos(filename = options.dosplot)
+        test.plot_dos(filename=options.dosplot, smear=options.smear)
     elif options.band:
-        #print(test.values['bands'])
         vb = test.values['bands']-1
         cb = vb + 1
         test.show_eigenvalues_by_band([vb, cb])

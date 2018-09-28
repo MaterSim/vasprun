@@ -42,7 +42,7 @@ Options:
   -n dosfig, --dosfig=dosfig
                         dos figure name, default: dos.png
 ```
-
+## force information
 $ python vasprun.py -v vasprun.xml -f yes
 
 ```
@@ -79,10 +79,8 @@ gap :   -0.4621
 +----+--------------------------+---------------------------------+
 
 ```
-```
-
+## DOS plots
 $ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png
 
-```
 It will geneate a dos-spd.png figure like the following:
 ![dos.png](https://github.com/qzhu2017/vasprun/blob/master/images/dos.png)

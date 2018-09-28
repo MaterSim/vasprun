@@ -307,7 +307,8 @@ class vasprun:
                 t_dos.append(self.parse_varray_pymatgen(ss))
         for s in dos.find("partial").find("array").findall("set"):
             for ss in s.findall("set"):
-                p_dos.append(self.parse_varray_pymatgen(ss))
+                for sss in ss.findall("set"):
+                    p_dos.append(self.parse_varray_pymatgen(sss))
         return t_dos, p_dos
 
     def parse_calculation(self, calculation):
@@ -502,7 +503,7 @@ class vasprun:
         else:
             CifWriter(struc, symprec=0.01).write_file(filename)
 
-    def plot_dos(self, filename='dos.png', smear=None, options='t', xlim=[-3, 3]):
+    def plot_dos(self, filename='dos.png', smear=None, styles='t', xlim=[-3, 3]):
         """export dos"""
         import matplotlib as mpl
         mpl.use("Agg")
@@ -515,28 +516,65 @@ class vasprun:
         e = tdos[:, 0]
         rows = (e > xlim[0]) & (e < xlim[1])
         e = e[rows]
+        plt_obj = {}
+        print(styles.split('+'))
+        for option in styles.split('+'):
+            if option == 't':
+                if len(self.values['calculation']['tdos']) == 1:
+                    tdos = tdos[rows, :]
+                    plt_obj['total'] = tdos[:, 1]
+                else:
+                    tdos1 = np.array(self.values['calculation']['tdos'][0])
+                    tdos2 = np.array(self.values['calculation']['tdos'][1])
+                    plt_obj['total-up'] = tdos1[rows, 1]
+                    plt_obj['total-dow'] = -1*tdos2[rows, 1]
+            elif option == 'spd':
+                pdos = self.values['calculation']['pdos']
+                N_atom = len(self.values["name_array"])
+                if len(pdos) == N_atom:
+                    pdos = np.array(pdos)
+                    spd = pdos[0, :, :]
+                    for i in range(1, N_atom):
+                        spd += pdos[i, :, :]
+                    s = spd[rows, 1]
+                    p = spd[rows, 2] + spd[rows, 3] + spd[rows, 4]
+                    d = spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9]
+                    plt_obj['s'] = s
+                    plt_obj['p'] = p
+                    plt_obj['d'] = d
+                else:
+                    pdos = np.array(pdos)
+                    spd1 = pdos[0, :, :]
+                    spd2 = pdos[1, :, :]
+                    for i in range(2, 2*N_atom):
+                        if i % 2 == 1:
+                            spd1 += np.array(pdos[i, :, :])
+                        else:
+                            spd2 += np.array(pdos[i, :, :])
+                    s1 = spd1[rows, 1]
+                    p1 = spd1[rows, 2] + spd1[rows, 3] + spd1[rows, 4]
+                    d1 = spd1[rows, 5] + spd1[rows, 6] + spd1[rows, 7] + spd1[rows, 8] + spd1[rows, 9]
+                    s2 = spd2[rows, 1]
+                    p2 = spd2[rows, 2] + spd2[rows, 3] + spd2[rows, 4]
+                    d2 = spd2[rows, 5] + spd2[rows, 6] + spd2[rows, 7] + spd2[rows, 8] + spd2[rows, 9]
+                    plt_obj['s-up'] = s1
+                    plt_obj['p-up'] = p1
+                    plt_obj['d-up'] = d1
+                    plt_obj['s-down'] = -1*s2
+                    plt_obj['p-down'] = -1*p2
+                    plt_obj['d-down'] = -1*d2
 
-        if options.find('t') >= 0:
-            if len(self.values['calculation']['tdos']) == 1:
-                tdos = tdos[rows, :]
-                if smear is not None:
-                    tdos = smear_data(tdos, smear)
-                plt.plot(e, tdos[:, 1], label='total')
-            else:
-                tdos1 = np.array(self.values['calculation']['tdos'][0])
-                tdos2 = np.array(self.values['calculation']['tdos'][1])
-                if smear is not None:
-                    tdos1 = smear_data(tdos1, smear)
-                    tdos2 = smear_data(tdos2, smear)
-                plt.plot(e, tdos1[rows, 1], label='total-up')
-                plt.plot(e, -1*tdos2[rows, 1], label='total-down')
+        for label in plt_obj.keys():
+            # print(len(e), len(plt_obj[label]), label)
+            e = np.reshape(e, [len(e), 1])
+            data = np.reshape(plt_obj[label], [len(e), 1])
+            if smear is not None: 
+                data = np.hstack((e, data))
+                data = smear_data(data, smear)
+                data = data[:, 1]
+            plt.plot(e, data, label=label)
 
-        # if options.find('spd')>=0: #by s/p/d
-        #    pdos = np.array(self.values['calculation']['pdos'][0])[rows, :]
-        #    plt.plot(self.pdos[:,0], self.pdos[:,1], lable='total')
-        # else: # by atom
-        #    tdos
-        plt.legend()
+        plt.legend(loc=1)
         plt.xlabel("Energy (eV)")
         plt.ylabel("DOS")
         plt.savefig(filename)
@@ -552,8 +590,8 @@ if __name__ == "__main__":
                       help="export symmetrized cif")
     parser.add_option("-k", "--kpoints", dest="kpoints", action='store_true',
                       help="kpoints file", metavar="kpoints file")
-    parser.add_option("-d", "--dosplot", dest="dosplot",
-                      help="export dos plot, e.g., dos.png", metavar="dos_plot")
+    parser.add_option("-d", "--dosplot", dest="dosplot", metavar="dos_plot", type=str,
+                      help="export dos plot, options: t, spd, a, a-Si, a-1")
     parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
@@ -564,6 +602,8 @@ if __name__ == "__main__":
                       help="show eigenvalues in valence/conduction band", metavar="dos_plot")
     parser.add_option("-s", "--smear", dest="smear", type='float',
                       help="smearing parameter for dos plot, e.g., 0.1 A", metavar="smearing")
+    parser.add_option("-n", "--dosfig", dest="dosfig", type='float',
+                      help="dos figure name, e.g., dos.png", metavar="dosfig")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -622,7 +662,7 @@ if __name__ == "__main__":
     elif options.parameters:
         pprint(test.values['parameters'])
     elif options.dosplot:
-        test.plot_dos(filename=options.dosplot, smear=options.smear)
+        test.plot_dos(styles=options.dosplot, smear=options.smear)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

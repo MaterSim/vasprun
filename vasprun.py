@@ -517,7 +517,6 @@ class vasprun:
         rows = (e > xlim[0]) & (e < xlim[1])
         e = e[rows]
         plt_obj = {}
-        print(styles.split('+'))
         for option in styles.split('+'):
             if option == 't':
                 if len(self.values['calculation']['tdos']) == 1:
@@ -527,7 +526,7 @@ class vasprun:
                     tdos1 = np.array(self.values['calculation']['tdos'][0])
                     tdos2 = np.array(self.values['calculation']['tdos'][1])
                     plt_obj['total-up'] = tdos1[rows, 1]
-                    plt_obj['total-dow'] = -1*tdos2[rows, 1]
+                    plt_obj['total-down'] = -1*tdos2[rows, 1]
             elif option == 'spd':
                 pdos = self.values['calculation']['pdos']
                 N_atom = len(self.values["name_array"])
@@ -564,6 +563,12 @@ class vasprun:
                     plt_obj['p-down'] = -1*p2
                     plt_obj['d-down'] = -1*d2
 
+        fig, ax = plt.subplots()
+        lines1 = []
+        lines2 = []
+        labels1 = []
+        labels2 = []
+        #ax.axis('equal')
         for label in plt_obj.keys():
             # print(len(e), len(plt_obj[label]), label)
             e = np.reshape(e, [len(e), 1])
@@ -572,11 +577,22 @@ class vasprun:
                 data = np.hstack((e, data))
                 data = smear_data(data, smear)
                 data = data[:, 1]
-            plt.plot(e, data, label=label)
+            #print(label, label.find('down'))
+            if label.find('down') > 0:
+                lines2 += ax.plot(e, data)#, label=label)
+                labels2.append(label)
+            else:
+                lines1 += ax.plot(e, data)#, label=label)
+                labels1.append(label)
+        ax.legend(lines1, [label for label in labels1], loc='upper right')
+        if len(lines2) > 0:
+            from matplotlib.legend import Legend
+            leg = Legend(ax, lines2, [label for label in labels2], loc='lower right')
 
-        plt.legend(loc=1)
+        ax.add_artist(leg)
         plt.xlabel("Energy (eV)")
         plt.ylabel("DOS")
+        plt.xlim(xlim)
         plt.savefig(filename)
 
 

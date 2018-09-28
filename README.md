@@ -80,9 +80,12 @@ gap :   -0.4621
 
 ```
 ## DOS plots
+
 A number of ways of plotting dos are also supported, some basic options are
-t: total dos
-spd: spd dos
+
+- t: total dos
+- spd: spd dos
+
 one can just use the -d option to customize the plots.
 If spin is included in vasprun.xml, the plot will show both up and down spin states separately.
 $ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png

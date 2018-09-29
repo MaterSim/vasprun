@@ -88,6 +88,7 @@ A number of ways of plotting dos are also supported, some basic options are
 
 one can just use the -d option to customize the plots.
 If spin is included in vasprun.xml, the plot will show both up and down spin states separately.
+
 $ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png
 
 It will geneate a dos-spd.png figure like the following:

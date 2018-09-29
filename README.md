@@ -15,9 +15,9 @@ In addition, several packages will be required
 - lxml
 
 One could follow the [wikipage](https://github.com/qzhu2017/CMS/wiki/Python-environment-setup) to set up your python environment.
-
+```
 $ python vasprun.py -h
-
+```
 ## Usage
 ```
 Usage: vasprun.py [options]
@@ -43,8 +43,9 @@ Options:
                         dos figure name, default: dos.png
 ```
 ## Force information
+```
 $ python vasprun.py -v vasprun.xml -f yes
-
+```
 ```
 formula :   Sc4C4
 efermi :   5.71888444
@@ -88,8 +89,8 @@ A number of ways of plotting dos are also supported, some basic options are
 
 one can just use the -d option to customize the plots.
 If spin is included in vasprun.xml, the plot will show both up and down spin states separately.
-
+```
 $ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png
-
+```
 It will geneate a dos-spd.png figure like the following:
 ![dos.png](https://github.com/qzhu2017/vasprun/blob/master/images/dos.png)

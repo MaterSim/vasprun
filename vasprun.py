@@ -11,6 +11,13 @@ from pprint import pprint
 from optparse import OptionParser
 import pandas as pd
 from tabulate import tabulate
+import matplotlib as mpl
+mpl.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
+plt.style.use("bmh")
+
 
 
 def smear_data(data, sigma):
@@ -503,15 +510,60 @@ class vasprun:
         else:
             CifWriter(struc, symprec=0.01).write_file(filename)
 
+    def parse_bandpath(self):
+        kpts = self.values['kpoints']['list']
+        rec_basis = np.array(self.values['finalpos']['rec_basis'])
+        paths = []
+        for i, kpt in enumerate(kpts):
+            if i == 0:
+                path = []
+                path.append(kpt)
+            elif i == len(kpts) - 1:
+                path.append(kpt)
+                paths.append(path)
+            elif kpt == kpts[i-1]:
+                paths.append(path)
+                path = []
+                path.append(kpt)
+            else:
+                path.append(kpt)
+
+        band_points = []
+        pointer = 0
+        for i, path in enumerate(paths):
+            path = np.array(path)
+            dist = np.linalg.norm(np.dot(path[0, :] - path[-1, :], rec_basis))
+            x = np.linspace(pointer, pointer+dist, len(path[:, 0]))
+            if i == 0:
+                band_paths = x
+            else:
+                band_paths = np.hstack((band_paths, x))
+            pointer += dist
+            band_points.append(pointer)
+
+        self.values['band_paths'] = band_paths
+        self.values['band_points'] = band_points
+
+    def plot_band(self, filename='band.png', styles='t', ylim=[-3, 3]):
+        efermi = self.values["calculation"]["efermi"]
+        eigens = np.array(self.values['calculation']['eigenvalues'])
+        paths = self.values['band_paths']
+        band_pts = self.values['band_points']
+
+        nkpt, nband, nocc = np.shape(eigens)
+        for i in range(nband):
+            band = eigens[:, i, 0] - efermi
+            plt.plot(paths, band, c='black')
+        for pt in band_pts:
+            plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
+        plt.ylabel("Energy (eV)")
+        plt.ylim(ylim)
+        plt.xlim([0, paths[-1]])
+        plt.xticks([])
+        plt.savefig(filename)
+
     def plot_dos(self, filename='dos.png', smear=None, styles='t', xlim=[-3, 3]):
         """export dos"""
-        import matplotlib as mpl
-        mpl.use("Agg")
-        import matplotlib.pyplot as plt
-        from matplotlib import rcParams
-        rcParams.update({'figure.autolayout': True})
-        plt.style.use("bmh")
-
         efermi = self.values['calculation']['efermi']
         tdos = np.array(self.values['calculation']['tdos'][0])
         tdos[:, 0] -= efermi
@@ -612,6 +664,8 @@ if __name__ == "__main__":
                       help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot", metavar="dos_plot", type=str,
                       help="export dos plot, options: t, spd, a, a-Si, a-1")
+    parser.add_option("-b", "--bandplot", dest="bandplot", metavar="band_plot", type=str,
+                      help="export band plot, options: total or partial")
     parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
@@ -622,8 +676,8 @@ if __name__ == "__main__":
                       help="show eigenvalues in valence/conduction band", metavar="dos_plot")
     parser.add_option("-s", "--smear", dest="smear", type='float',
                       help="smearing parameter for dos plot, e.g., 0.1 A", metavar="smearing")
-    parser.add_option("-n", "--dosfig", dest="dosfig", type='float',
-                      help="dos figure name, e.g., dos.png", metavar="dosfig")
+    parser.add_option("-n", "--figname", dest="figname", type=str, default='fig.png',
+                      help="dos/band figure name, default: fig.png", metavar="figname")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -682,7 +736,10 @@ if __name__ == "__main__":
     elif options.parameters:
         pprint(test.values['parameters'])
     elif options.dosplot:
-        test.plot_dos(styles=options.dosplot, smear=options.smear)
+        test.plot_dos(styles=options.dosplot, filename=options.figname, smear=options.smear)
+    elif options.bandplot:
+        test.parse_bandpath()
+        test.plot_band(styles=options.bandplot, filename=options.figname)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

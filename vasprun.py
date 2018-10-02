@@ -527,21 +527,50 @@ class vasprun:
     def parse_bandpath(self):
         kpts = self.values['kpoints']['list']
         rec_basis = np.array(self.values['finalpos']['rec_basis'])
-        paths = []
-        for i, kpt in enumerate(kpts):
-            if i == 0:
-                path = []
-                path.append(kpt)
-            elif i == len(kpts) - 1:
-                path.append(kpt)
-                paths.append(path)
-            elif kpt == kpts[i-1]:
-                paths.append(path)
-                path = []
-                path.append(kpt)
+       
+        def inline(kpt, path):
+            if len(path) < 2:
+                return True
             else:
+                v1 = np.array(kpt) - np.array(path[-1])
+                v2 = np.array(path[-1]) - np.array(path[-2])
+                v1_norm = np.linalg.norm(v1)
+                v2_norm = np.linalg.norm(v2)
+                if v1_norm < 1e-3:
+                    return False
+                else:
+                    cos = np.dot(v1, v2)/v1_norm/v2_norm
+                    if abs(cos-1) < 1e-2:
+                        return True
+                    else:
+                        #print(kpt, path[-2], path[-1], angle, np.dot(v1, v2)/v1_norm/v2_norm)
+                        return False
+        paths = []
+        path = []
+        for i, kpt in enumerate(kpts):
+            if inline(kpt, path):
                 path.append(kpt)
-
+                if i == len(kpts) - 1:
+                    paths.append(path)
+            else:
+                paths.append(path)
+                path = []
+                path.append(kpt)
+        #for i, kpt in enumerate(kpts):
+        #    if i == 0:
+        #        path = []
+        #        path.append(kpt)
+        #    elif i == len(kpts) - 1:
+        #        path.append(kpt)
+        #        paths.append(path)
+        #    elif np.linalg.norm(kpt - kpts[i-1] - slope) > 1e-2:
+        #        paths.append(path)
+        #        path = []
+        #        path.append(kpt)
+        #    else:
+        #        slope = kpt - kpts[i-1]
+        #        path.append(kpt)
+        #print(paths)
         band_points = []
         pointer = 0
         for i, path in enumerate(paths):
@@ -571,9 +600,9 @@ class vasprun:
             p = np.empty([len(paths)])
             for kpt in range(len(paths)):
                 p[kpt] = np.sum(proj[kpt, i, :, :])
-            #plt.plot(paths, band, c='black')
+            plt.plot(paths, band, c='black', lw=1.0)
             #print(i, min(band), max(band), max(p))
-            plt.scatter(paths, band, c=p, vmin=0, vmax=1, cmap=cm)
+            plt.scatter(paths, band, c=p, vmin=0, vmax=1, cmap=cm, s=10)
 
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)

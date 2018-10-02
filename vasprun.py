@@ -556,21 +556,7 @@ class vasprun:
                 paths.append(path)
                 path = []
                 path.append(kpt)
-        #for i, kpt in enumerate(kpts):
-        #    if i == 0:
-        #        path = []
-        #        path.append(kpt)
-        #    elif i == len(kpts) - 1:
-        #        path.append(kpt)
-        #        paths.append(path)
-        #    elif np.linalg.norm(kpt - kpts[i-1] - slope) > 1e-2:
-        #        paths.append(path)
-        #        path = []
-        #        path.append(kpt)
-        #    else:
-        #        slope = kpt - kpts[i-1]
-        #        path.append(kpt)
-        #print(paths)
+
         band_points = []
         pointer = 0
         for i, path in enumerate(paths):
@@ -587,7 +573,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename='band.png', styles='t', ylim=[-20, 3]):
+    def plot_band(self, filename='band.png', styles='normal', ylim=[-20, 3], p_max=1.0):
         efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eigenvalues'])
         paths = self.values['band_paths']
@@ -601,14 +587,14 @@ class vasprun:
             for kpt in range(len(paths)):
                 p[kpt] = np.sum(proj[kpt, i, :, :])
             plt.plot(paths, band, c='black', lw=1.0)
-            #print(i, min(band), max(band), max(p))
-            plt.scatter(paths, band, c=p, vmin=0, vmax=1, cmap=cm, s=10)
+            if styles == 'projected':
+                p[p>p_max] = p_max
+                plt.scatter(paths, band, c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
 
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
 
-        #plt.clim(0, 1)
-        plt.colorbar()
+        if styles == 'projected': plt.colorbar()
         plt.ylabel("Energy (eV)")
         plt.ylim(ylim)
         plt.xlim([0, paths[-1]])
@@ -717,8 +703,8 @@ if __name__ == "__main__":
                       help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot", metavar="dos_plot", type=str,
                       help="export dos plot, options: t, spd, a, a-Si, a-1")
-    parser.add_option("-b", "--bandplot", dest="bandplot", metavar="band_plot", type=str,
-                      help="export band plot, options: total or partial")
+    parser.add_option("-b", "--bandplot", dest="bandplot", metavar="band_plot", default='normal', type=str,
+                      help="export band plot, options: normal or projected")
     parser.add_option("-v", "--vasprun", dest="vasprun", default='vasprun.xml',
                       help="path of vasprun.xml file, default: vasprun.xml", metavar="vasprun")
     parser.add_option("-f", "--showforce", dest="force", action='store_true',
@@ -733,6 +719,8 @@ if __name__ == "__main__":
                       help="dos/band figure name, default: fig.png", metavar="figname")
     parser.add_option("-l", "--lim", dest="lim", default='-3,3', 
                       help="dos/band plot lim, default: -3, 3", metavar="lim")
+    parser.add_option("-m", "--max", dest="max", default=0.5, type=float,
+                      help="band plot colorbar, default: 0.5", metavar="max")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -798,7 +786,7 @@ if __name__ == "__main__":
         lim = options.lim.split(',')
         lim = [float(i) for i in lim]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, p_max=options.max)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

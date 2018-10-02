@@ -318,6 +318,17 @@ class vasprun:
                     p_dos.append(self.parse_varray_pymatgen(sss))
         return t_dos, p_dos
 
+    def parse_projected(self, proj):
+        projected = []
+        for s in proj.find("array").find("set").findall("set"):
+            for ss in s.findall("set"):
+                p = []
+                for sss in ss.findall("set"):
+                    p.append(self.parse_varray_pymatgen(sss))
+                projected.append(p)
+        
+        return projected #[N_kpts, N_bands]
+
     def parse_calculation(self, calculation):
         stress = []
         force = []
@@ -339,6 +350,8 @@ class vasprun:
                         efermi = float(j.text)
                         break
                 tdos, pdos = self.parse_dos(i)
+            elif i.tag == "projected":
+                proj = self.parse_projected(i)
             elif i.tag == "eigenvalues":
                 eigenvalues = self.parse_eigenvalue(i)
             elif i.tag == "scstep":
@@ -363,6 +376,7 @@ class vasprun:
         calculation["energy"] = energy
         calculation["tdos"] = tdos
         calculation["pdos"] = pdos
+        calculation["projected"] = proj
 
         return calculation, scf_count
 
@@ -544,18 +558,28 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename='band.png', styles='t', ylim=[-3, 3]):
+    def plot_band(self, filename='band.png', styles='t', ylim=[-20, 3]):
         efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eigenvalues'])
         paths = self.values['band_paths']
         band_pts = self.values['band_points']
-
+        proj = np.array(self.values["calculation"]["projected"]) #[N_kpts, N_band, Ions, 9]
+        cm = plt.cm.get_cmap('RdYlBu')
         nkpt, nband, nocc = np.shape(eigens)
         for i in range(nband):
             band = eigens[:, i, 0] - efermi
-            plt.plot(paths, band, c='black')
+            p = np.empty([len(paths)])
+            for kpt in range(len(paths)):
+                p[kpt] = np.sum(proj[kpt, i, :, :])
+            #plt.plot(paths, band, c='black')
+            #print(i, min(band), max(band), max(p))
+            plt.scatter(paths, band, c=p, vmin=0, vmax=1, cmap=cm)
+
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
+
+        #plt.clim(0, 1)
+        plt.colorbar()
         plt.ylabel("Energy (eV)")
         plt.ylim(ylim)
         plt.xlim([0, paths[-1]])
@@ -678,6 +702,8 @@ if __name__ == "__main__":
                       help="smearing parameter for dos plot, e.g., 0.1 A", metavar="smearing")
     parser.add_option("-n", "--figname", dest="figname", type=str, default='fig.png',
                       help="dos/band figure name, default: fig.png", metavar="figname")
+    parser.add_option("-l", "--lim", dest="lim", default='-3,3', 
+                      help="dos/band plot lim, default: -3, 3", metavar="lim")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -736,10 +762,14 @@ if __name__ == "__main__":
     elif options.parameters:
         pprint(test.values['parameters'])
     elif options.dosplot:
-        test.plot_dos(styles=options.dosplot, filename=options.figname, smear=options.smear)
+        lim = options.lim.split(',')
+        lim = [float(i) for i in lim]
+        test.plot_dos(styles=options.dosplot, filename=options.figname, xlim=lim, smear=options.smear)
     elif options.bandplot:
+        lim = options.lim.split(',')
+        lim = [float(i) for i in lim]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

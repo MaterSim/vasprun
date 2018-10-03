@@ -1,11 +1,15 @@
 # vasprun
-This repo used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
+This code is used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
 
 - band gap calculation
-- dos plot (total dos, needs to add partial dos)
+- dos plot (total dos / orbital partial dos / atomic partial dos)
+- band structure plot (with color map enhancement)
 - incar/potcar/poscar generation
 - force analysys
-- eigenvalue analysys (needs to add more)
+- KS orbital eigenvalue analysys
+- dynamical matrix (to add)
+- elastic constants (to add)
+- dielectric constants (to add)
 
 ## Prerequisites
 To use it, one must have python 3 installed. It is recommended to install conda if one don't have root access in his computer.

@@ -594,7 +594,11 @@ class vasprun:
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
 
-        if styles == 'projected': plt.colorbar()
+        if styles == 'projected': 
+            cbar = plt.colorbar(orientation='horizontal', 
+                                ticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], 
+                                )
+            cbar.set_label('ratio of projected DOS')#, fontsize=12)
         plt.ylabel("Energy (eV)")
         plt.ylim(ylim)
         plt.xlim([0, paths[-1]])

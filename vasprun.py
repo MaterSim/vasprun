@@ -313,9 +313,12 @@ class vasprun:
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
         for s in dos.find("partial").find("array").findall("set"):
-            for ss in s.findall("set"):
+            for i, ss in enumerate(s.findall("set")):
+                p = []
                 for sss in ss.findall("set"):
-                    p_dos.append(self.parse_varray_pymatgen(sss))
+                    p.append(self.parse_varray_pymatgen(sss))
+                p_dos.append(p)
+
         return t_dos, p_dos
 
     def parse_projected(self, proj):
@@ -605,6 +608,59 @@ class vasprun:
         plt.xticks([])
         plt.savefig(filename)
 
+    def get_dos(self, rows, style='t'):
+        mydos = []
+        labels = []
+        a_array = self.values["name_array"]
+        N_atom = len(a_array)
+        tdos = np.array(self.values['calculation']['tdos'])
+        pdos = np.array(self.values['calculation']['pdos'])
+        a, b, c, d = np.shape(pdos)
+        pdos = np.reshape(pdos, [b, a, c, d])
+        if style == 't':
+            for spin in tdos:
+                mydos.append(spin[rows, 1])
+                labels.append('total')
+
+        elif style in ['s', 'p', 'd']:
+            for spin in pdos:
+                spd = spin[0, : , :]
+                for i in range(1, N_atom):
+                    spd += spin[i, :, :]
+
+                if style == 's':
+                    mydos.append(spd[rows, 1])
+                elif style == 'p':
+                    mydos.append(spd[rows, 2] + spd[rows, 3] + spd[rows, 4])
+                else:
+                    mydos.append(spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9])
+                labels.append(style)
+
+        elif style[0] == 'a':
+            if style[1].isdigit():
+                ids = style[1].split('-')
+                start, end = int(ids[0]), int(ids[1]) 
+                ids = range(start, end+1)
+            else: 
+                ele = style[1:]
+                ids = []
+                for i in range(N_atom):
+                    if ele == a_array[i]:
+                        ids.append(i)
+            for spin in pdos:
+                spd = spin[ids[0], :, :]
+                for i in ids[1:]:
+                    spd += spin[i, :, :] 
+                mydos.append(spd[rows, 1] + spd[rows, 2] + spd[rows, 3] + spd[rows, 4] + \
+                             spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9])
+                labels.append(style[1:])
+
+        if len(labels) == 2:
+            labels[0] += '-up'
+            labels[1] += '-down'
+            mydos[1] *= -1
+        return mydos, labels
+
     def plot_dos(self, filename='dos.png', smear=None, styles='t', xlim=[-3, 3]):
         """export dos"""
         efermi = self.values['calculation']['efermi']
@@ -615,71 +671,32 @@ class vasprun:
         e = e[rows]
         plt_obj = {}
         for option in styles.split('+'):
-            if option == 't':
-                if len(self.values['calculation']['tdos']) == 1:
-                    tdos = tdos[rows, :]
-                    plt_obj['total'] = tdos[:, 1]
-                else:
-                    tdos1 = np.array(self.values['calculation']['tdos'][0])
-                    tdos2 = np.array(self.values['calculation']['tdos'][1])
-                    plt_obj['total-up'] = tdos1[rows, 1]
-                    plt_obj['total-down'] = -1*tdos2[rows, 1]
-            elif option == 'spd':
-                pdos = self.values['calculation']['pdos']
-                N_atom = len(self.values["name_array"])
-                if len(pdos) == N_atom:
-                    pdos = np.array(pdos)
-                    spd = pdos[0, :, :] 
-                    for i in range(1, N_atom):
-                        spd += pdos[i, :, :]
-                    s = spd[rows, 1]
-                    p = spd[rows, 2] + spd[rows, 3] + spd[rows, 4]
-                    d = spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9]
-                    plt_obj['s'] = s
-                    plt_obj['p'] = p
-                    plt_obj['d'] = d
-                else:
-                    pdos = np.array(pdos)
-                    spd1 = pdos[0, :, :]
-                    spd2 = pdos[1, :, :]
-                    for i in range(2, 2*N_atom):
-                        if i % 2 == 1:
-                            spd1 += np.array(pdos[i, :, :])
-                        else:
-                            spd2 += np.array(pdos[i, :, :])
-                    s1 = spd1[rows, 1]
-                    p1 = spd1[rows, 2] + spd1[rows, 3] + spd1[rows, 4]
-                    d1 = spd1[rows, 5] + spd1[rows, 6] + spd1[rows, 7] + spd1[rows, 8] + spd1[rows, 9]
-                    s2 = spd2[rows, 1]
-                    p2 = spd2[rows, 2] + spd2[rows, 3] + spd2[rows, 4]
-                    d2 = spd2[rows, 5] + spd2[rows, 6] + spd2[rows, 7] + spd2[rows, 8] + spd2[rows, 9]
-                    plt_obj['s-up'] = s1
-                    plt_obj['p-up'] = p1
-                    plt_obj['d-up'] = d1
-                    plt_obj['s-down'] = -1*s2
-                    plt_obj['p-down'] = -1*p2
-                    plt_obj['d-down'] = -1*d2
+            if option == 'spd':
+                option = ['s', 'p', 'd']
+            else:
+                option = [option]
+            for style in option:
+                mydos, labels = self.get_dos(rows, style)
+                for data, label in zip(mydos, labels):
+                    plt_obj[label] = data
 
         fig, ax = plt.subplots()
         lines1 = []
         lines2 = []
         labels1 = []
         labels2 = []
-        #ax.axis('equal')
         for label in plt_obj.keys():
-            # print(len(e), len(plt_obj[label]), label)
             e = np.reshape(e, [len(e), 1])
             data = np.reshape(plt_obj[label], [len(e), 1])
             if smear is not None: 
                 data = np.hstack((e, data))
                 data = smear_data(data, smear)
                 data = data[:, 1]
-            #print(label, label.find('down'))
             if label.find('down') > 0:
-                lines2 += ax.plot(e, data)#, label=label)
+                lines2 += ax.plot(e, data)
                 labels2.append(label)
             else:
-                lines1 += ax.plot(e, data)#, label=label)
+                lines1 += ax.plot(e, data)
                 labels1.append(label)
         leg1 = ax.legend(lines1, [label for label in labels1], fancybox=True, loc='upper right')
         leg1.get_frame().set_alpha(0.5)
@@ -722,7 +739,7 @@ if __name__ == "__main__":
     parser.add_option("-n", "--figname", dest="figname", type=str, default='fig.png',
                       help="dos/band figure name, default: fig.png", metavar="figname")
     parser.add_option("-l", "--lim", dest="lim", default='-3,3', 
-                      help="dos/band plot lim, default: -3, 3", metavar="lim")
+                      help="dos/band plot lim, default: -3,3", metavar="lim")
     parser.add_option("-m", "--max", dest="max", default=0.5, type=float,
                       help="band plot colorbar, default: 0.5", metavar="max")
 

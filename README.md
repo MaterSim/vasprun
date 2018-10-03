@@ -32,6 +32,8 @@ Options:
   -k, --kpoints         kpoints file
   -d dos_plot, --dosplot=dos_plot
                         export dos plot, options: t, spd, a, a-Si, a-1
+  -b band_plot, --bandplot=band_plot
+                        export band plot, options: normal or projected
   -v vasprun, --vasprun=vasprun
                         path of vasprun.xml file, default: vasprun.xml
   -f, --showforce       show forces, default: no
@@ -39,8 +41,10 @@ Options:
   -e, --eigenvalues     show eigenvalues in valence/conduction band
   -s smearing, --smear=smearing
                         smearing parameter for dos plot, e.g., 0.1 A
-  -n dosfig, --dosfig=dosfig
-                        dos figure name, default: dos.png
+  -n figname, --figname=figname
+                        dos/band figure name, default: fig.png
+  -l lim, --lim=lim     dos/band plot lim, default: -3, 3
+  -m max, --max=max     band plot colorbar, default: 0.5
 ```
 ## Force information
 ```
@@ -92,5 +96,20 @@ If spin is included in vasprun.xml, the plot will show both up and down spin sta
 ```
 $ python vasprun.py -v vasprun.xml -d t+spd -s 0.15 -n dos-spd.png
 ```
-It will geneate a dos-spd.png figure like the following:
+It will geneate a dos-spd.png figure as follows:
 ![dos.png](https://github.com/qzhu2017/vasprun/blob/master/images/dos.png)
+
+## Band plots
+```
+$ python vasprun.py -v vasprun.xml-band -b normal -l -3,3 -m 0.4 -n band.png
+```
+It will generate a band.png figure as the follows
+![band.png](https://github.com/qzhu2017/vasprun/blob/master/images/band.png)
+
+Alternatively, one can generated the colored band based on the occupation of projected DOS.
+```
+$ python vasprun.py -v vasprun.xml-band -b -l -3,3 -m 0.4 -n band-projected.png
+```
+![band-projected.png](https://github.com/qzhu2017/vasprun/blob/master/images/band-projected.png)
+
+

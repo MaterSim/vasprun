@@ -19,7 +19,6 @@ rcParams.update({'figure.autolayout': True})
 plt.style.use("bmh")
 
 
-
 def smear_data(data, sigma):
     """
     Apply Gaussian smearing to spectrum y value.
@@ -40,7 +39,7 @@ class units:
     pi = 3.1415926
 
 class IR:
-    def __init__(self, born_chgs, eigenvalues, eigenvectors):
+    def __init__(self, born_chgs, eigenvalues, eigenvectors, mass, vol):
         self.born_chgs = np.array(born_chgs)
         self.modes = eigenvectors
         self.freqs = eigenvalues
@@ -59,39 +58,44 @@ class IR:
             IRs.append(IR)
             if abs(IR) > 1e-2 and abs(freq) > 5e-3:
                 # IR active, compute the epsilon
-                epsilons.append(compute_epsilon_by_modes(mode, freq, self.born_chgs))
+                epsilons.append(compute_epsilon_by_modes(mode, freq, self.born_chgs, vol, mass))
             else:
-                epsilons.append(np.array([0,0,0]))
+                epsilons.append(np.zeros([3,3]).flatten())
                 print('IR inactive, skip this mode')
         self.IRs = np.array(IRs)
         self.epsilons = epsilons
-
     def show(self):
         print("\n    Freq(eV)    IR Intensity     E_xx         E_yy         E_zz")
         for ir, freq, eps in zip(self.IRs, self.freqs, self.epsilons):
-            print("{:12.3f} {:12.3f} {:12.3f} {:12.3f} {:12.3f}".format(freq, ir, eps[0], eps[1], eps[2]))
+            print("{:12.3f} {:12.3f} {:12.3f} {:12.3f} {:12.3f}".format(freq, ir, eps[0], eps[4], eps[8]))
         eps_sum = np.sum(self.epsilons, axis=0)
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[0], eps_sum[1], eps_sum[2]))
+        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[3], eps_sum[4], eps_sum[5]))
+        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[6], eps_sum[7], eps_sum[8]))
 
 
-def compute_epsilon_by_modes(mode, freq, z, V=66.50, mass=[39, 24, 18, 18, 18]):
+def compute_epsilon_by_modes(mode, freq, z, V, mass):
     """Compute the epsilon for the given mode"""
+    #transform all units to hartree
+    freq = freq/27.211386245988 
+    V = V/(0.529**3)  #bohr
 
     # compute the mode effiective charge tensors Z* (3 component)
     zt = np.zeros(3)
     for alpha in range(3):
-        for i in range(len(z)):
-            for beta in range(3):
-                zt[alpha] += z[i, alpha, beta] / np.sqrt(mass[i]) * mode[i, beta]
-
+        for beta in range(3):
+            for i in range(len(z)):
+                zt[alpha] += z[i, alpha, beta] * mode[i, beta] / np.sqrt(mass[i])
+                #zt[alpha] += z[i, alpha, beta] * mode[i, beta]
+                #zt[alpha] += z[i, alpha, beta] * mode[i, beta] / mass[i]
     epsilon = np.zeros([3,3])
     # compute the epsilon
     for alpha in range(3):
         for beta in range(3):
-            epsilon[alpha, beta] = zt[alpha] * zt[beta] / (freq**2)
-
-    factor = 4*units.pi
-    return np.diagonal(epsilon)/V
+            epsilon[alpha, beta] = zt[alpha] * zt[beta] / ((freq)**2)
+    factor = 4*units.pi/V
+    epsilon *= factor
+    return epsilon.flatten()
 
 
 class vasprun:
@@ -201,6 +205,7 @@ class vasprun:
         for v in dynmat.findall("v"):
             for i in v.text.split():
                 eigenvalues.append(np.sqrt(abs(float(i)))*factor*units.plank/units.ev2j/2/units.pi)
+                #eigenvalues.append(np.sqrt(abs(float(i))))
         return hessian, eigenvalues, eigenvectors
 
     def parse_born_chg(self, charge):
@@ -267,7 +272,7 @@ class vasprun:
 
         array_dictionary["value"] = values
         array_dictionary['dimensions'] = dimension_list
-        array_dictionary['fileds'] = field_list
+        array_dictionary['fields'] = field_list
 
         return array_dictionary
 
@@ -428,7 +433,8 @@ class vasprun:
         hessian = []
         dyn_eigenvalues = [] 
         dyn_eigenvectors = []
-
+        epsilon_ion = []
+        epsilon_ = []
         for i in calculation.iterchildren():
             if i.attrib.get("name") == "stress":
                 stress = self.parse_varray(i)
@@ -459,6 +465,9 @@ class vasprun:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
             elif i.tag == "array" and i.attrib.get("name") == "born_charges":
                 born_chgs = self.parse_born_chg(i)
+            elif i.tag == "varray" and i.attrib.get("name") == "epsilon_ion":
+                epsilon_ion = self.parse_varray(i)
+
             elif i.tag == "dynmat":
                 hessian, dyn_eigenvalues, dyn_eigenvectors = self.parse_dynmat(i)
 
@@ -475,6 +484,7 @@ class vasprun:
         calculation["hessian"] = hessian
         calculation["normal_modes_eigenvalues"] = dyn_eigenvalues
         calculation["normal_modes_eigenvectors"] = dyn_eigenvectors 
+        calculation["epsilon_ion"] = epsilon_ion
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
@@ -836,6 +846,9 @@ if __name__ == "__main__":
                       help="dos/band plot lim, default: -3,3", metavar="lim")
     parser.add_option("-m", "--max", dest="max", default=0.5, type=float,
                       help="band plot colorbar, default: 0.5", metavar="max")
+    parser.add_option("--dyn", dest="dyn", action='store_true',
+                      help="dynamic matrix analysis, default: false", metavar="dyn")
+
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -918,8 +931,26 @@ if __name__ == "__main__":
             print("diff: ", cbs[ID]-vbs[ID])
         else:
             print("This is spin calculation")
-    
-    chg = test.values['calculation']['born_charges']
-    eig = test.values['calculation']['normal_modes_eigenvalues']
-    eigv = test.values['calculation']['normal_modes_eigenvectors']
-    IR(chg, eig, eigv).show()
+    elif options.dyn:
+        chg = test.values['calculation']['born_charges']
+        eig = test.values['calculation']['normal_modes_eigenvalues']
+        eigv = test.values['calculation']['normal_modes_eigenvectors']
+        vol = np.linalg.det(np.array(test.values['finalpos']['basis']))
+        mass = []
+        for i, ele in enumerate(test.values["composition"].keys()):
+            for m in range(test.values["composition"][ele]):
+                mass.append(test.values['mass'][i])
+        IR(chg, eig, eigv, mass, vol).show()
+        #for mode in eigv:
+        #    mode = np.reshape(mode, [int(len(mode)/3), 3])
+        #    sum = 0
+        #    for a in mode:
+        #        sum += np.sum(a**2)
+        #    print(sum)
+        eps = np.array(test.values['calculation']['epsilon_ion'])
+        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[0,0], eps[0,1], eps[0,2]))
+        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[1,0], eps[1,1], eps[1,2]))
+        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[2,0], eps[2,1], eps[2,2]))
+
+
+

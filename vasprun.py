@@ -37,6 +37,10 @@ class units:
     plank = 6.626075e-34
     c = 2.99792458e+10
     pi = 3.1415926
+    proton_mass = 1836
+    ev2hartree = 27.211386245988
+    a2bohr = 0.529
+    ev2cm = 8065.6
 
 class IR:
     def __init__(self, born_chgs, eigenvalues, eigenvectors, mass, vol):
@@ -61,13 +65,13 @@ class IR:
                 epsilons.append(compute_epsilon_by_modes(mode, freq, self.born_chgs, vol, mass))
             else:
                 epsilons.append(np.zeros([3,3]).flatten())
-                print('IR inactive, skip this mode')
+                #print('IR inactive, skip this mode')
         self.IRs = np.array(IRs)
         self.epsilons = epsilons
     def show(self):
-        print("\n    Freq(eV)    IR Intensity     E_xx         E_yy         E_zz")
+        print("\n   Freq(cm-1)    IR Intensity     E_xx         E_yy         E_zz")
         for ir, freq, eps in zip(self.IRs, self.freqs, self.epsilons):
-            print("{:12.3f} {:12.3f} {:12.3f} {:12.3f} {:12.3f}".format(freq, ir, eps[0], eps[4], eps[8]))
+            print("{:12.3f} {:12.3f} {:12.3f} {:12.3f} {:12.3f}".format(freq*units.ev2cm, ir, eps[0], eps[4], eps[8]))
         eps_sum = np.sum(self.epsilons, axis=0)
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[0], eps_sum[1], eps_sum[2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[3], eps_sum[4], eps_sum[5]))
@@ -77,8 +81,9 @@ class IR:
 def compute_epsilon_by_modes(mode, freq, z, V, mass):
     """Compute the epsilon for the given mode"""
     #transform all units to hartree
-    freq = freq/27.211386245988 
-    V = V/(0.529**3)  #bohr
+    freq = freq/units.ev2hartree
+    V = V/(units.a2bohr**3)  #bohr
+    #mass = mass*units.proton_mass
 
     # compute the mode effiective charge tensors Z* (3 component)
     zt = np.zeros(3)
@@ -93,7 +98,7 @@ def compute_epsilon_by_modes(mode, freq, z, V, mass):
     for alpha in range(3):
         for beta in range(3):
             epsilon[alpha, beta] = zt[alpha] * zt[beta] / ((freq)**2)
-    factor = 4*units.pi/V
+    factor = 4*units.pi/V/units.proton_mass
     epsilon *= factor
     return epsilon.flatten()
 

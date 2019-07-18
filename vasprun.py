@@ -405,12 +405,13 @@ class vasprun:
         for s in dos.find("total").find("array").findall("set"):
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
-        for s in dos.find("partial").find("array").findall("set"):
-            for i, ss in enumerate(s.findall("set")):
-                p = []
-                for sss in ss.findall("set"):
-                    p.append(self.parse_varray_pymatgen(sss))
-                p_dos.append(p)
+        if dos.find("partial"):
+            for s in dos.find("partial").find("array").findall("set"):
+                for i, ss in enumerate(s.findall("set")):
+                    p = []
+                    for sss in ss.findall("set"):
+                        p.append(self.parse_varray_pymatgen(sss))
+                    p_dos.append(p)
 
         return t_dos, p_dos
 
@@ -440,6 +441,7 @@ class vasprun:
         dyn_eigenvectors = []
         epsilon_ion = []
         epsilon_ = []
+        proj = []
         for i in calculation.iterchildren():
             if i.attrib.get("name") == "stress":
                 stress = self.parse_varray(i)
@@ -946,12 +948,14 @@ if __name__ == "__main__":
             for m in range(test.values["composition"][ele]):
                 mass.append(test.values['mass'][i])
         IR(chg, eig, eigv, mass, vol).show()
-        #for mode in eigv:
-        #    mode = np.reshape(mode, [int(len(mode)/3), 3])
-        #    sum = 0
-        #    for a in mode:
-        #        sum += np.sum(a**2)
-        #    print(sum)
+        modes = []
+        for mode in eigv:
+            #mode = np.reshape(mode, [int(len(mode)/3), 3])
+            modes.append(np.array(mode))
+            #for a in mode:
+            #    sum += np.sum(a**2)
+            #print(sum)
+        print(np.sum(modes[14]*modes[10]))
         eps = np.array(test.values['calculation']['epsilon_ion'])
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[0,0], eps[0,1], eps[0,2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[1,0], eps[1,1], eps[1,2]))

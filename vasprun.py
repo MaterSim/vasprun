@@ -495,13 +495,23 @@ class vasprun:
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):
-        kpoints_dict = {'list': [], 'weights': []}
+        kpoints_dict = {'list': [], 'weights': [], 'divisions': [], 'mesh_scheme': ''}
+
+        for i in kpoints.iterchildren():
+            if i.tag == 'generation':
+                kpoints_dict['mesh_scheme'] = i.attrib.get('param')
+                for j in i.iterchildren():
+                    if j.attrib.get("name") == 'divisions':
+                        kpoints_dict['divisions'] = [int(number) for number in j.text.split()]
+                        break
+
         for va in kpoints.findall("varray"):
             name = va.attrib["name"]
             if name == "kpointlist":
                 kpoints_dict['list'] = self.parse_varray(va)
             elif name == "weights":
                 kpoints_dict['weights'] = self.parse_varray(va)
+
         return kpoints_dict
 
     def get_bands(self):

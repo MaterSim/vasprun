@@ -159,7 +159,7 @@ class vasprun:
                                         self.get_potcar(child)
             elif child.tag == "calculation":
                 self.values["calculation"], scf_count = self.parse_calculation(child)
-                if self.values['parameters']['response functions']['NELM'] == scf_count:
+                if self.values['parameters']['electronic']['electronic convergence']['NELM'] == scf_count:
                     self.error = True
                     self.errormsg = 'SCF is not converged'
             elif child.tag == "structure" and child.attrib.get("name") == "finalpos":

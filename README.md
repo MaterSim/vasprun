@@ -18,6 +18,11 @@ In addition, several packages will be required
 - pandans
 - lxml
 
+## Installation
+```
+$ python setup.py install
+```
+
 One could follow the [wikipage](https://github.com/qzhu2017/CMS/wiki/Python-environment-setup) to set up your python environment.
 ```
 $ python vasprun.py -h

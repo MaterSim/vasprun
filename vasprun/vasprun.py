@@ -610,14 +610,14 @@ class vasprun:
         contents = []
         for key in self.values['incar'].keys():
             content = key + ' = ' + str(self.values['incar'][key])
-            if filename is None:
-                print(content)
-            else:
-                content += '\n'
-                contents.append(str(content))
+            content += '\n'
+            contents.append(str(content))
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
+        else: 
+            print(contents)
+        self.incar = contents
 
     def export_kpoints(self, filename=None):
         """export kpoints"""
@@ -728,6 +728,7 @@ class vasprun:
         plt.xlim([0, paths[-1]])
         plt.xticks([])
         plt.savefig(filename)
+        plt.close()
 
     def get_dos(self, rows, style='t'):
         mydos = []
@@ -831,6 +832,7 @@ class vasprun:
         plt.ylabel("DOS")
         plt.xlim(xlim)
         plt.savefig(filename)
+        plt.close()
 
 
 if __name__ == "__main__":

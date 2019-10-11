@@ -618,6 +618,8 @@ class vasprun:
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
+        else:
+            return contents
 
     def export_kpoints(self, filename=None):
         """export kpoints"""

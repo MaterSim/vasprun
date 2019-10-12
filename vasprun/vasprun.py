@@ -605,7 +605,7 @@ class vasprun:
         df = pd.DataFrame(col_name)
         print(df)
 
-    def export_incar(self, filename=None):
+    def export_incar(self, filename=None, print_incar=True):
         """export incar"""
         contents = []
         for key in self.values['incar'].keys():
@@ -615,7 +615,7 @@ class vasprun:
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
-        else: 
+        elif print_incar=True: 
             print(contents)
         self.incar = contents
 

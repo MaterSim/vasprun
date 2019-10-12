@@ -610,16 +610,14 @@ class vasprun:
         contents = []
         for key in self.values['incar'].keys():
             content = key + ' = ' + str(self.values['incar'][key])
-            if filename is None:
-                print(content)
-            else:
-                content += '\n'
-                contents.append(str(content))
+            content += '\n'
+            contents.append(str(content))
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
-        else:
-            return contents
+        else: 
+            print(contents)
+        self.incar = contents
 
     def export_kpoints(self, filename=None):
         """export kpoints"""
@@ -712,7 +710,11 @@ class vasprun:
             p = np.empty([len(paths)])
             for kpt in range(len(paths)):
                 p[kpt] = np.sum(proj[kpt, i, :, :])
-            plt.plot(paths, band, c='black', lw=1.0)
+            if len(band)/len(paths) == 2:
+                plt.plot(paths, band[:len(paths)], c='black', lw=1.0)
+                plt.plot(paths, band[len(paths):], c='red', lw=1.0)
+            else:
+                plt.plot(paths, band, c='black', lw=1.0)
             if styles == 'projected':
                 p[p>p_max] = p_max
                 plt.scatter(paths, band, c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
@@ -730,6 +732,7 @@ class vasprun:
         plt.xlim([0, paths[-1]])
         plt.xticks([])
         plt.savefig(filename)
+        plt.close()
 
     def get_dos(self, rows, style='t'):
         mydos = []
@@ -833,6 +836,7 @@ class vasprun:
         plt.ylabel("DOS")
         plt.xlim(xlim)
         plt.savefig(filename)
+        plt.close()
 
 
 if __name__ == "__main__":

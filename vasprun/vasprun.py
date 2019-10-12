@@ -615,7 +615,7 @@ class vasprun:
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
-        elif print_incar=True: 
+        elif print_incar: 
             print(contents)
         self.incar = contents
 

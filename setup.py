@@ -12,6 +12,7 @@ setup(
     long_description=long_description,
     url="https://github.com/qzhu2017/vasprun",
     packages=['vasprun'],
+    scripts=['vasprun/vasprun'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

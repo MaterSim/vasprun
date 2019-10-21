@@ -1,6 +1,5 @@
 #!/usr/bin/env  python
 # encoding: utf-8
-from scipy.ndimage.filters import gaussian_filter1d
 from lxml import etree
 from pymatgen.io.cif import CifWriter
 from pymatgen.io.vasp import Poscar
@@ -26,6 +25,8 @@ def smear_data(data, sigma):
     Args:
         sigma: Std dev for Gaussian smear function
     """
+    from scipy.ndimage.filters import gaussian_filter1d
+
     diff = [data[i + 1, 0] - data[i, 0] for i in range(len(data) - 1)]
     avg_x_per_step = np.sum(diff) / len(diff)
     data[:, 1] = gaussian_filter1d(data[:, 1], sigma / avg_x_per_step)
@@ -41,67 +42,6 @@ class units:
     ev2hartree = 27.211386245988
     a2bohr = 0.529
     ev2cm = 8065.6
-
-class IR:
-    def __init__(self, born_chgs, eigenvalues, eigenvectors, mass, vol):
-        self.born_chgs = np.array(born_chgs)
-        self.modes = eigenvectors
-        self.freqs = eigenvalues
-        self.Natom = len(born_chgs)
-        IRs = []
-        epsilons = []
-        for mode, freq in zip(self.modes, self.freqs):
-            IRx, IRy, IRz = 0, 0, 0
-            mode = np.reshape(mode, [self.Natom, 3])
-            for i in range(self.Natom):
-                for j in range(3):
-                    IRx += mode[i, j] * self.born_chgs[i,j,0]
-                    IRy += mode[i, j] * self.born_chgs[i,j,1]
-                    IRz += mode[i, j] * self.born_chgs[i,j,2]
-            IR = IRx**2 + IRy**2 + IRz**2
-            IRs.append(IR)
-            if abs(IR) > 1e-2 and abs(freq) > 5e-3:
-                # IR active, compute the epsilon
-                epsilons.append(compute_epsilon_by_modes(mode, freq, self.born_chgs, vol, mass))
-            else:
-                epsilons.append(np.zeros([3,3]).flatten())
-                #print('IR inactive, skip this mode')
-        self.IRs = np.array(IRs)
-        self.epsilons = epsilons
-    def show(self):
-        print("\n   Freq(cm-1)    IR Intensity     E_xx         E_yy         E_zz")
-        for ir, freq, eps in zip(self.IRs, self.freqs, self.epsilons):
-            print("{:12.3f} {:12.3f} {:12.3f} {:12.3f} {:12.3f}".format(freq*units.ev2cm, ir, eps[0], eps[4], eps[8]))
-        eps_sum = np.sum(self.epsilons, axis=0)
-        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[0], eps_sum[1], eps_sum[2]))
-        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[3], eps_sum[4], eps_sum[5]))
-        print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('Total', eps_sum[6], eps_sum[7], eps_sum[8]))
-
-
-def compute_epsilon_by_modes(mode, freq, z, V, mass):
-    """Compute the epsilon for the given mode"""
-    #transform all units to hartree
-    freq = freq/units.ev2hartree
-    V = V/(units.a2bohr**3)  #bohr
-    #mass = mass*units.proton_mass
-
-    # compute the mode effiective charge tensors Z* (3 component)
-    zt = np.zeros(3)
-    for alpha in range(3):
-        for beta in range(3):
-            for i in range(len(z)):
-                zt[alpha] += z[i, alpha, beta] * mode[i, beta] / np.sqrt(mass[i])
-                #zt[alpha] += z[i, alpha, beta] * mode[i, beta]
-                #zt[alpha] += z[i, alpha, beta] * mode[i, beta] / mass[i]
-    epsilon = np.zeros([3,3])
-    # compute the epsilon
-    for alpha in range(3):
-        for beta in range(3):
-            epsilon[alpha, beta] = zt[alpha] * zt[beta] / ((freq)**2)
-    factor = 4*units.pi/V/units.proton_mass
-    epsilon *= factor
-    return epsilon.flatten()
-
 
 class vasprun:
     """
@@ -955,6 +895,7 @@ if __name__ == "__main__":
         else:
             print("This is spin calculation")
     elif options.dyn:
+        from vasprun.IR import IR
         chg = test.values['calculation']['born_charges']
         eig = test.values['calculation']['normal_modes_eigenvalues']
         eigv = test.values['calculation']['normal_modes_eigenvectors']
@@ -966,16 +907,9 @@ if __name__ == "__main__":
         IR(chg, eig, eigv, mass, vol).show()
         modes = []
         for mode in eigv:
-            #mode = np.reshape(mode, [int(len(mode)/3), 3])
             modes.append(np.array(mode))
-            #for a in mode:
-            #    sum += np.sum(a**2)
-            #print(sum)
         print(np.sum(modes[14]*modes[10]))
         eps = np.array(test.values['calculation']['epsilon_ion'])
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[0,0], eps[0,1], eps[0,2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[1,0], eps[1,1], eps[1,2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[2,0], eps[2,1], eps[2,2]))
-
-
-

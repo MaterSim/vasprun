@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="vasprun",
-    version="0.0dev",
+    version="1.0",
     author="Qiang Zhu",
     author_email="qiang.zhu@unlv.edu",
     description="Python code for vasprun.xml analyais",

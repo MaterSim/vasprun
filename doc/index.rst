@@ -17,13 +17,45 @@ Introduction
 
 Version info
 ============
-The current version is 0.1dev. Expect updates upon request.
+The current version is ``1.0`` at `GitHub <https://github.com/qzhu2017/vasprun>`_. 
 
-Additional Documentation
+Expect updates upon request by `Qiang Zhu <http://www.physics.unlv.edu/~qzhu/index.html>`_ at University of Nevada Las Vegas.
+
+Installation and Setup
+======================
+
+Dependencies
+------------
+
+Versions indicated are those used during development. 
+
+  * `SciPy 1.0.1 <https://www.scipy.org/install.html>`_  
+  * `NumPy 1.14.3 <https://www.scipy.org/scipylib/download.html>`_  
+  * `Pandas 0.20.3 <https://pandas.pydata.org/getpandas.html>`_  
+  * `Pymatgen <http://pymatgen.org/#getting-pymatgen>`_  
+
+Installation
+------------
+
+To install it, first install all dependencies, then make a copy of the source code:
+
+``git clone https://github.com/qzhu2017/vasprun``
+
+Then, inside of the downloaded directory, run
+
+``python setup.py install``
+
+This will install the module. The code can be used within Python via
+
+.. code-block:: Python
+
+  import vasprun
+  print(vasprun.__version__)
+
+Tutorials
 ========================
 
 .. toctree::
-   Installation
    Usage1
    Usage2
    :maxdepth: 2

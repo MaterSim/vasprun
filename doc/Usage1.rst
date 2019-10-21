@@ -32,7 +32,7 @@ Options:
 
 
 1, A quick run
------------
+---------------
 
 ``$ vasprun -v vasprun.xml -f yes``
 
@@ -70,18 +70,20 @@ Options:
   +----+--------------------------+---------------------------------+
 
 2, Plot DOS
---------
+------------
 A number of ways of plotting dos are also supported, some basic options are
 
 - t: total dos
 - spd: spd dos
 
 one can just use the -d option to customize the plots. If spin is included in vasprun.xml, the plot will show both up and down spin states separately.
+.. image:: images/dos.png
+   :width: 600
 
 ``$ vasprun -v vasprun.xml -f yes``
 
 3, Plot Band structure
--------------------
+----------------------
 3.1 band plot with customized energy range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``$ vasprun -v vasprun.xml-band -b normal -l -3,3 -m 0.4 -n band.png``

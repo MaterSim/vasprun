@@ -1,7 +1,8 @@
 Introduction
 ============
 
-``vasprun`` is a python project used for quick analysis of `VASP<https://www.vasp.at>`_ calculation solely from ``vasprun.xml``. It has the following features:
+``vasprun`` is a python project used for quick analysis of `VASP
+<https://www.vasp.at>`_ calculation solely from ``vasprun.xml``. It has the following features:
 
 -  band gap calculation
 -  dos plot (total dos / orbital partial dos / atomic partial dos)

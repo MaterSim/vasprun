@@ -1,7 +1,7 @@
-pyxtal
-======
+vasprun
+=======
 
 .. toctree::
    :maxdepth: 4
 
-   pyxtal
+   vasprun

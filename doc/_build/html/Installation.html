@@ -17,7 +17,6 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Basic Usage Guide" href="Usage.html" />
     <link rel="prev" title="Introduction" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -26,9 +25,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="Usage.html" title="Basic Usage Guide"
-             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Introduction"
              accesskey="P">previous</a> |</li>
@@ -52,23 +48,20 @@
 <li><a class="reference external" href="https://www.scipy.org/scipylib/download.html">NumPy 1.14.3</a></li>
 <li><a class="reference external" href="https://pandas.pydata.org/getpandas.html">Pandas 0.20.3</a></li>
 <li><a class="reference external" href="http://pymatgen.org/#getting-pymatgen">Pymatgen 2017.9.3</a></li>
-<li><a class="reference external" href="https://atztogo.github.io/spglib/python-spglib.html#installation">SpgLib for Python 1.9.9.44</a></li>
 </ul>
 </div></blockquote>
 </div>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>To install PyXtal, first install all dependencies, then make a copy of the source code:</p>
-<p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/qzhu2017/pyxtal</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/qzhu2017/vasprun</span></code></p>
 <p>Then, inside of the downloaded directory, run</p>
 <p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code></p>
 <p>This will install the module. The code can be used within Python via</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyxtal</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vasprun</span>
+<span class="k">print</span><span class="p">(</span><span class="n">vasprun</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>More extensive test can be invoked by running</p>
-<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">$root/pyxtal/test_cases/test_all.py</span></code></p>
-<p>Ideally, one should see the completion of all modules in the end.</p>
 </div>
 </div>
 
@@ -90,9 +83,6 @@
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Introduction</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="Usage.html"
-                        title="next chapter">Basic Usage Guide</a></p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -115,9 +105,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="Usage.html" title="Basic Usage Guide"
-             >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Introduction"
              >previous</a> |</li>

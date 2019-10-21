@@ -6,7 +6,7 @@
 Introduction
 ============
 
-   Vasprun is a python project to extract ***
+Vasprun is a python project to extract and process the information from `vasprun.xml` generated from the calculation of the `VASP` code, a popular code for electronic structure simulation.
 
 Version info
 ============
@@ -17,5 +17,6 @@ Additional Documentation
 
 .. toctree::
    Installation
-   Usage
+   Usage1
+   Usage2
    :maxdepth: 2

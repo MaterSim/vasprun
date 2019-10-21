@@ -1,16 +1,22 @@
-.. PyXtal documentation master file, created by
-   sphinx-quickstart on Mon Aug 27 10:19:01 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Introduction
 ============
 
-Vasprun is a python project to extract and process the information from `vasprun.xml` generated from the calculation of the `VASP` code, a popular code for electronic structure simulation.
+``vasprun`` is a python project used for quick analysis of [VASP](https://www.vasp.at) calculation solely from ``vasprun.xml``. It has the following features:
+
+-  band gap calculation
+-  dos plot (total dos / orbital partial dos / atomic partial dos)
+-  band structure plot (with color map enhancement)
+-  incar/potcar/poscar generation
+-  force analysys
+-  Kohn-Sham orbital eigenvalue analysys
+-  Infrared intensity analysis
+-  dielectric constants
+-  elastic constants (to add)
+
 
 Version info
 ============
-The current version is 0.1dev. Expect frequent updates.
+The current version is 0.1dev. Expect updates upon request.
 
 Additional Documentation
 ========================

@@ -1,4 +1,4 @@
-pyxtal package
+vasprun package
 ==============
 
 .. automodule:: vasprun
@@ -11,11 +11,5 @@ Subpackages
 
 .. toctree::
 
-    pyxtal.IR
+    IR
 
-Submodules
-----------
-
-.. toctree::
-
-   vasprun.vasprun

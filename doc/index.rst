@@ -65,3 +65,11 @@ Tutorials
    Usage1
    Usage2
    :maxdepth: 2
+
+Modules
+========================
+
+.. toctree::
+   :maxdepth: 4
+
+   vasprun

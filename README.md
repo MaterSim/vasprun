@@ -1,5 +1,4 @@
-# vasprun
-This code is used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
+vasprun-xml is used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
 
 - band gap calculation
 - dos plot (total dos / orbital partial dos / atomic partial dos)

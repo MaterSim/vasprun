@@ -23,16 +23,22 @@ Expect updates upon request by `Qiang Zhu <http://www.physics.unlv.edu/~qzhu/ind
 
 Installation and Setup
 ======================
+This code is written based on Python 3. Python 2.x won't be supported
 
 Dependencies
 ------------
 
-Versions indicated are those used during development. 
+Required packages:
 
-  * `SciPy 1.0.1 <https://www.scipy.org/install.html>`_  
-  * `NumPy 1.14.3 <https://www.scipy.org/scipylib/download.html>`_  
-  * `Pandas 0.20.3 <https://pandas.pydata.org/getpandas.html>`_  
-  * `Pymatgen <http://pymatgen.org/#getting-pymatgen>`_  
+- `lxml <https://pypi.org/project/lxml/>`_
+- `Matplotlib <https://matplotlib.org>`_
+- `NumPy <https://www.scipy.org/scipylib/download.html>`_  
+- `Pandas <https://pandas.pydata.org/getpandas.html>`_  
+
+Optional for some features:
+
+- `Pymatgen <http://pymatgen.org/#getting-pymatgen>`_  
+- `SciPy <https://www.scipy.org/install.html>`_  
 
 Installation
 ------------

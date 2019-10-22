@@ -637,7 +637,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename='band.png', styles='normal', ylim=[-20, 3], p_max=1.0):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], p_max=1.0):
         efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
         paths = self.values['band_paths']
@@ -671,8 +671,11 @@ class vasprun:
         plt.ylim(ylim)
         plt.xlim([0, paths[-1]])
         plt.xticks([])
-        plt.savefig(filename)
-        plt.close()
+        if filename is None:
+            plt.show()
+        else:
+            plt.savefig(filename)
+            plt.close()
 
     def get_dos(self, rows, style='t'):
         mydos = []
@@ -727,7 +730,7 @@ class vasprun:
             mydos[1] *= -1
         return mydos, labels
 
-    def plot_dos(self, filename='dos.png', smear=None, styles='t', xlim=[-3, 3]):
+    def plot_dos(self, filename=None, smear=None, styles='t', xlim=[-3, 3]):
         """export dos"""
         efermi = self.values['calculation']['efermi']
         tdos = np.array(self.values['calculation']['tdos'][0])
@@ -775,9 +778,11 @@ class vasprun:
         plt.xlabel("Energy (eV)")
         plt.ylabel("DOS")
         plt.xlim(xlim)
-        plt.savefig(filename)
-        plt.close()
-
+        if filename is None:
+            plt.show()
+        else:
+            plt.savefig(filename)
+            plt.close()
 
 if __name__ == "__main__":
     parser = OptionParser()

@@ -18,5 +18,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    requires=['pymatgen', 'numpy', 'scipy', 'matplotlib'],
+    requires=['pymatgen', 'lxml', 'pandas', 'numpy', 'scipy', 'matplotlib'],
 )

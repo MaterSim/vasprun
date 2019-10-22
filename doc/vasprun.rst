@@ -1,5 +1,5 @@
 vasprun package
-==============
+===============
 
 .. automodule:: vasprun
     :members:

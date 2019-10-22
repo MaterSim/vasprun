@@ -15,8 +15,6 @@ if __name__ == "__main__":
                       help="export incar file", metavar='incar file')
     parser.add_option("-p", "--poscar", dest="poscar",
                       help="export poscar file", metavar="poscar file")
-    parser.add_option("-c", "--cif", dest="cif", metavar="cif file",
-                      help="export symmetrized cif")
     parser.add_option("-k", "--kpoints", dest="kpoints", action='store_true',
                       help="kpoints file", metavar="kpoints file")
     parser.add_option("-d", "--dosplot", dest="dosplot", metavar="dos_plot", type=str,
@@ -95,9 +93,7 @@ if __name__ == "__main__":
     elif options.kpoints:
         test.export_kpoints(filename=options.kpoints)
     elif options.poscar:
-        test.export_structure(filename=options.poscar)
-    elif options.cif:
-        test.export_structure(filename=options.cif, fileformat='cif')
+        test.export_poscar(filename=options.poscar)
     elif options.parameters:
         pprint(test.values['parameters'])
     elif options.dosplot:

@@ -1,15 +1,13 @@
 #!/usr/bin/env  python
 # encoding: utf-8
+from vasprun.version import __version__
 from lxml import etree
-from pymatgen.io.cif import CifWriter
-from pymatgen.io.vasp import Poscar
-from pymatgen import Structure
 import numpy as np
-import warnings
 from pprint import pprint
 from optparse import OptionParser
 import pandas as pd
 from tabulate import tabulate
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
@@ -576,18 +574,35 @@ class vasprun:
             with open(filename, 'w') as f:
                 f.writelines(contents)
 
-    def export_structure(self, filename, fileformat='poscar'):
-        """export incar"""
+    def export_poscar(self, filename):
+        """export poscar"""
+
+        comp = self.values["composition"] 
         atomNames = self.values["name_array"]
         latt = self.values["finalpos"]["basis"]
         pos = self.values["finalpos"]["positions"]
 
-        struc = Structure(latt, atomNames, pos)
+        with open(filename, 'w') as f:
+            string = ''
+            for key in comp.keys():
+                string += key
+                string += str(comp[key])
+            string += '\n'
+            f.write(string)
+            f.write('1.0\n')
+            f.write('{:12.6f} {:12.6f} {:12.6f}\n'.format(latt[0][0], latt[0][1], latt[0][2]))
+            f.write('{:12.6f} {:12.6f} {:12.6f}\n'.format(latt[1][0], latt[1][1], latt[1][2]))
+            f.write('{:12.6f} {:12.6f} {:12.6f}\n'.format(latt[2][0], latt[2][1], latt[2][2]))
+            for key in comp.keys():
+                f.write('{:4s}'.format(key))
+            f.write('\n')
+            for key in comp.keys():
+                f.write('{:4d}'.format(comp[key]))
+            f.write('\n')
+            f.write('Direct\n')
+            for coor in pos:
+                f.write('{:12.6f} {:12.6f} {:12.6f}\n'.format(coor[0], coor[1], coor[2]))
 
-        if fileformat == 'poscar':
-            Poscar(struc).write_file(filename=filename)
-        else:
-            CifWriter(struc, symprec=0.01).write_file(filename)
 
     def parse_bandpath(self):
         kpts = self.values['kpoints']['list']

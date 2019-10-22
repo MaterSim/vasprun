@@ -57,7 +57,8 @@ if __name__ == "__main__":
     output = {'formula': None,
               'calculation': ['efermi', 'energy', 'energy_per_atom'],
               'metal': None,
-              'gap': None}
+              'gap': None,
+              "bands": None}
     for tag in output.keys():
         if output[tag] is None:
             print(tag, ':  ', test.values[tag])
@@ -116,12 +117,12 @@ if __name__ == "__main__":
         vbs = test.eigenvalues_by_band(vb)
         ID = np.argmin(cbs-vbs)
         if len(cbs) == len(test.values['kpoints']['list']):
-            print("Eigenvalue at CBM: ", min(cbs))
-            print("Eigenvalue at VBM: ", max(vbs))
+            print("Eigenvalue at CBM: {:8.4f}".format(min(cbs)))
+            print("Eigenvalue at VBM: {:8.4f}".format(max(vbs)))
             print("minimum gap at : ", test.values['kpoints']['list'][ID])
-            print("CB: ", cbs[ID])
-            print("VB: ", vbs[ID])
-            print("diff: ", cbs[ID]-vbs[ID])
+            print("CB:                {:8.4f}".format(cbs[ID]))
+            print("VB:                {:8.4f}".format(vbs[ID]))
+            print("diff:              {:8.4f}".format(cbs[ID]-vbs[ID]))
         else:
             print("This is spin calculation")
     elif options.dyn:

@@ -345,7 +345,7 @@ class vasprun:
         for s in dos.find("total").find("array").findall("set"):
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
-        if dos.find("partial"):
+        if len(dos.find("partial"))>0:
             for s in dos.find("partial").find("array").findall("set"):
                 for i, ss in enumerate(s.findall("set")):
                     p = []
@@ -528,19 +528,20 @@ class vasprun:
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
         return eigens[:, band, 0] - efermi
 
-    def show_eigenvalues_by_band(self, bands=[0], spin=True):
+    def show_eigenvalues_by_band(self, bands=[0]):
+        spin = self.values['parameters']['electronic']['electronic spin']['LSORBIT']
         kpts = self.values['kpoints']['list']
         col_name = {'K-points': kpts}
-        for i, band in enumerate(bands):
+        for band in bands:
             eigen = self.eigenvalues_by_band(band)
             if spin:
                 eigens = np.reshape(eigen, [int(len(eigen)/2), 2])
-                name1 = 'band' + str(i) + 'up'
-                name2 = 'band' + str(i) + 'down'
+                name1 = 'band' + str(band) + 'up'
+                name2 = 'band' + str(band) + 'down'
                 col_name[name1] = eigens[:, 0]
                 col_name[name2] = eigens[:, 1]
             else:
-                name = 'band'+str(i)
+                name = 'band'+str(band)
                 col_name[name] = eigen
         df = pd.DataFrame(col_name)
         print(df)

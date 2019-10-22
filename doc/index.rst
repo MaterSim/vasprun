@@ -17,7 +17,7 @@ Introduction
 
 Version info
 ============
-The current version is ``1.0`` at `GitHub <https://github.com/qzhu2017/vasprun>`_. 
+The current version is ``1.2.2`` at `GitHub <https://github.com/qzhu2017/vasprun>`_. 
 
 Expect updates upon request by `Qiang Zhu <http://www.physics.unlv.edu/~qzhu/index.html>`_ at University of Nevada Las Vegas.
 
@@ -40,13 +40,12 @@ Required packages:
 Installation
 ------------
 
-To install it, first install all dependencies, then make a copy of the source code:
+To install it, one can simply type ``pip install vasprun`` or make a copy of the source code, and then install it manually.
+::
 
-``git clone https://github.com/qzhu2017/vasprun.git``
-
-Then, inside of the downloaded directory, run
-
-``python setup.py install``
+  git clone https://github.com/qzhu2017/vasprun.git
+  cd vasprun
+  python setup.py install
 
 This will install the module. The code can be used within Python via
 

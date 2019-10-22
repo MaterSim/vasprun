@@ -30,15 +30,12 @@ Dependencies
 
 Required packages:
 
-- `lxml <https://pypi.org/project/lxml/>`_
-- `Matplotlib <https://matplotlib.org>`_
-- `NumPy <https://www.scipy.org/scipylib/download.html>`_  
-- `Pandas <https://pandas.pydata.org/getpandas.html>`_  
-
-Optional for some features:
-
-- `Pymatgen <http://pymatgen.org/#getting-pymatgen>`_  
-- `SciPy <https://www.scipy.org/install.html>`_  
+- `lxml>=4.2.5 <https://pypi.org/project/lxml/>`_
+- `Matplotlib>=2.0.0 <https://matplotlib.org>`_
+- `NumPy>=1.13.3 <https://www.scipy.org/scipylib/download.html>`_  
+- `SciPy>1.1.0 <https://www.scipy.org/install.html>`_  
+- `Pandas>=0.23.4 <https://pandas.pydata.org/getpandas.html>`_  
+- `Pymatgen>=2018.12.12 <http://pymatgen.org/#getting-pymatgen>`_  
 
 Installation
 ------------

@@ -11,8 +11,6 @@ Options:
   -i, --incar           export incar file
   -p poscar_file, --poscar=poscar_file 
                         export poscar file
-  -c cif_file, --cif=cif_file
-                        export symmetrized cif
   -k, --kpoints         kpoints file
   -d dos_plot, --dosplot=dos_plot
                         export dos plot, options: t, spd, a, a-Si, a-1

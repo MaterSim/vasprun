@@ -42,7 +42,7 @@ Installation
 
 To install it, first install all dependencies, then make a copy of the source code:
 
-``git clone https://github.com/qzhu2017/vasprun``
+``git clone https://github.com/qzhu2017/vasprun.git``
 
 Then, inside of the downloaded directory, run
 

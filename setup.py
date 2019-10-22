@@ -1,16 +1,13 @@
 from distutils.core import setup
-
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+import setuptools  # noqa
 
 setup(
-    name="vasprun",
+    name="vasprun-xml",
     version="1.0",
     author="Qiang Zhu",
     author_email="qiang.zhu@unlv.edu",
-    description="Python code for vasprun.xml analyais",
-    long_description=long_description,
-    url="https://github.com/qzhu2017/vasprun",
+    description="description",
+    url="https://github.com/qzhu2017/vasprun/archive/v1.0.zip",
     packages=['vasprun'],
     scripts=['vasprun/vasprun'],
     classifiers=[

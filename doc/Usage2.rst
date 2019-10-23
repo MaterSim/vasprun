@@ -76,7 +76,6 @@ Then, you can retrieve many informations from ``vasp.values`` attribute. The val
 .. code-block:: Python
 
     vasp = vasprun('vasprun-band.xml')
-    vasp.parse_bandpath()
     vasp.plot_band(filename='band1.png')
 
 .. image:: ../images/band1.png
@@ -104,3 +103,4 @@ If you want to adjust the range of energy, just use the ``ylim`` parameter,
    :width: 903 px
    :scale: 40 %
 
+for more advanced usage, please refer to the :ref:`vasprun package`

@@ -11,5 +11,5 @@ Subpackages
 
 .. toctree::
 
-    IR
+    vasprun.IR
 

@@ -1,4 +1,6 @@
 ![PyPI downloads](https://img.shields.io/pypi/dm/vasprun-xml)
+![python](https://img.shields.io/pypi/pyversions/vasprun-xml)
+![version](https://img.shields.io/pypi/v/vasprun-xml)
 
 vasprun-xml is used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
 

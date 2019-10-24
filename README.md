@@ -1,3 +1,5 @@
+![PyPI downloads](https://img.shields.io/pypi/dm/vasprun-xml)
+
 vasprun-xml is used for quick analysis of vasp calculation solely from vasprun.xml. It has the following features:
 
 - band gap calculation

@@ -1,6 +1,6 @@
-![PyPI downloads](https://img.shields.io/pypi/dm/vasprun-xml)
-![python](https://img.shields.io/pypi/pyversions/vasprun-xml)
-![version](https://img.shields.io/pypi/v/vasprun-xml)
+[![PyPI downloads](https://img.shields.io/pypi/dm/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
+[![python](https://img.shields.io/pypi/pyversions/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
+[![version](https://img.shields.io/pypi/v/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
 [![Documentation Status](https://readthedocs.org/projects/vasprun-xml/badge/?version=latest)](https://vasprun-xml.readthedocs.io/en/latest/?badge=latest)
 
 

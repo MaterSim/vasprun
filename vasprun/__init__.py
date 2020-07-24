@@ -102,6 +102,12 @@ class vasprun:
                 if self.values['parameters']['electronic']['electronic convergence']['NELM'] == scf_count:
                     self.error = True
                     self.errormsg = 'SCF is not converged'
+
+                if self.values['parameters']['electronic']['electronic spin']['LSORBIT'] \
+                        or self.values['parameters']['electronic']['electronic spin']['ISPIN'] == 2:
+                    self.spin = True
+                else:
+                    self.spin = False
             elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
                 self.values["finalpos"] = self.parse_finalpos(child)
             elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
@@ -477,10 +483,11 @@ class vasprun:
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
 
-        if self.values['parameters']['electronic']['electronic spin']['LSORBIT']:
-            fac = 1
-        else:
-            fac = 2
+        #if self.spin:
+        #    fac = 1
+        #else:
+        #    fac = 2
+        fac = 2
 
         if total % 2 == 0:
             IBAND = int(total/fac)
@@ -539,12 +546,11 @@ class vasprun:
         return eigens[:, band, 0] - efermi
 
     def show_eigenvalues_by_band(self, bands=[0]):
-        spin = self.values['parameters']['electronic']['electronic spin']['LSORBIT']
         kpts = self.values['kpoints']['list']
         col_name = {'K-points': kpts}
         for band in bands:
             eigen = self.eigenvalues_by_band(band)
-            if spin:
+            if self.spin:
                 eigens = np.reshape(eigen, [int(len(eigen)/2), 2])
                 name1 = 'band' + str(band) + 'up'
                 name2 = 'band' + str(band) + 'down'
@@ -705,7 +711,12 @@ class vasprun:
                 plt.plot(paths, band, c='black', lw=1.0)
             if styles == 'projected':
                 p[p>p_max] = p_max
-                plt.scatter(paths, band, c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
+                #print(len(band), len(paths))
+                if len(band)/len(paths) == 2:
+                    plt.scatter(paths, band[:len(paths)], c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
+                    plt.scatter(paths, band[len(paths):], c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
+                else:
+                    plt.scatter(paths, band, c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
 
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)

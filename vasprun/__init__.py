@@ -546,7 +546,6 @@ class vasprun:
         return eigens[:, band, 0] - efermi
 
     def show_eigenvalues_by_band(self, bands=[0]):
-        spin = self.values['parameters']['electronic']['electronic spin']['LSORBIT']
         kpts = self.values['kpoints']['list']
         col_name = {'K-points': kpts}
         for band in bands:

@@ -102,12 +102,6 @@ class vasprun:
                 if self.values['parameters']['electronic']['electronic convergence']['NELM'] == scf_count:
                     self.error = True
                     self.errormsg = 'SCF is not converged'
-
-                if self.values['parameters']['electronic']['electronic spin']['LSORBIT'] \
-                        or self.values['parameters']['electronic']['electronic spin']['ISPIN'] == 2:
-                    self.spin = True
-                else:
-                    self.spin = False
             elif child.tag == "structure" and child.attrib.get("name") == "finalpos":
                 self.values["finalpos"] = self.parse_finalpos(child)
             elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
@@ -483,11 +477,10 @@ class vasprun:
         composition = self.values['composition']
         total = int(self.values['parameters']['electronic']['NELECT'])
 
-        #if self.spin:
-        #    fac = 1
-        #else:
-        #    fac = 2
-        fac = 2
+        if self.values['parameters']['electronic']['electronic spin']['LSORBIT']:
+            fac = 1
+        else:
+            fac = 2
 
         if total % 2 == 0:
             IBAND = int(total/fac)
@@ -546,11 +539,12 @@ class vasprun:
         return eigens[:, band, 0] - efermi
 
     def show_eigenvalues_by_band(self, bands=[0]):
+        spin = self.values['parameters']['electronic']['electronic spin']['LSORBIT']
         kpts = self.values['kpoints']['list']
         col_name = {'K-points': kpts}
         for band in bands:
             eigen = self.eigenvalues_by_band(band)
-            if self.spin:
+            if spin:
                 eigens = np.reshape(eigen, [int(len(eigen)/2), 2])
                 name1 = 'band' + str(band) + 'up'
                 name2 = 'band' + str(band) + 'down'
@@ -678,7 +672,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], p_max=1.0):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], p_max=1.0, p_min=0.0, saveBands=False, dpi=300):
         """
         plot the bandstructure
 
@@ -701,8 +695,10 @@ class vasprun:
         nkpt, nband, nocc = np.shape(eigens)
         for i in range(nband):
             band = eigens[:, i, 0] - efermi
+            if np.all(band < ylim[0]) or np.all(band > ylim[1]):
+                continue
             p = np.empty([len(paths)])
-            for kpt in range(len(paths)):
+            for kpt,_ in enumerate(paths):
                 p[kpt] = np.sum(proj[kpt, i, :, :])
             if len(band)/len(paths) == 2:
                 plt.plot(paths, band[:len(paths)], c='black', lw=1.0)
@@ -711,12 +707,13 @@ class vasprun:
                 plt.plot(paths, band, c='black', lw=1.0)
             if styles == 'projected':
                 p[p>p_max] = p_max
-                #print(len(band), len(paths))
-                if len(band)/len(paths) == 2:
-                    plt.scatter(paths, band[:len(paths)], c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
-                    plt.scatter(paths, band[len(paths):], c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
-                else:
-                    plt.scatter(paths, band, c=p, vmin=0, vmax=p_max, cmap=cm, s=10)
+                p[p<p_min] = p_min
+                plt.scatter(paths, band, c=p, vmin=p_min, vmax=p_max, cmap=cm, s=10)
+                if saveBands:
+                    np.savetxt('band%04d.dat'%i,np.transpose([band,p]))
+            else:
+                if saveBands:
+                    np.savetxt('band%04d.dat'%i,band)
 
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
@@ -733,7 +730,7 @@ class vasprun:
         if filename is None:
             plt.show()
         else:
-            plt.savefig(filename)
+            plt.savefig(filename,dpi=dpi)
             plt.close()
 
     def get_dos(self, rows, style='t'):
@@ -790,7 +787,7 @@ class vasprun:
             mydos[1] *= -1
         return mydos, labels
 
-    def plot_dos(self, filename=None, smear=None, styles='t', xlim=[-3, 3]):
+    def plot_dos(self, filename=None, smear=None, styles='t', xlim=[-3, 3], dpi=300):
         """
         plot the DOS
 
@@ -852,6 +849,6 @@ class vasprun:
         if filename is None:
             plt.show()
         else:
-            plt.savefig(filename)
+            plt.savefig(filename,dpi=dpi)
             plt.close()
 

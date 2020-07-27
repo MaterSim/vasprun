@@ -109,7 +109,7 @@ if __name__ == "__main__":
         pmaxmin = options.max.split(',')
         pmaxmin = [float(i) for i in pmaxmin]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, p_max=pmaxmin[1], p_min=pmaxmin[0], saveBands=options.saveBands, dpi=options.dpi)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, saveBands=options.saveBands, dpi=options.dpi)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

@@ -672,7 +672,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], p_max=1.0, p_min=0.0, saveBands=False, dpi=300):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], saveBands=False, dpi=300):
         """
         plot the bandstructure
 
@@ -706,9 +706,9 @@ class vasprun:
             else:
                 plt.plot(paths, band, c='black', lw=1.0)
             if styles == 'projected':
-                p[p>p_max] = p_max
-                p[p<p_min] = p_min
-                plt.scatter(paths, band, c=p, vmin=p_min, vmax=p_max, cmap=cm, s=10)
+                p[p<plim[0]] = plim[0]
+                p[p>plim[1]] = plim[1]
+                plt.scatter(paths, band, c=p, vmin=plim[0], vmax=plim[1], cmap=cm, s=10)
                 if saveBands:
                     np.savetxt('band%04d.dat'%i,np.transpose([band,p]))
             else:

@@ -35,11 +35,14 @@ if __name__ == "__main__":
                       help="dos/band figure name, default: fig.png", metavar="figname")
     parser.add_option("-l", "--lim", dest="lim", default='-3,3', 
                       help="dos/band plot lim, default: -3,3", metavar="lim")
-    parser.add_option("-m", "--max", dest="max", default=0.5, type=float,
-                      help="band plot colorbar, default: 0.5", metavar="max")
+    parser.add_option("-m", "--max", dest="max", default='0.0,0.5', 
+                      help="band plot colorbar, default: 0.0,0.5", metavar="max")
     parser.add_option("--dyn", dest="dyn", action='store_true',
                       help="dynamic matrix analysis, default: false", metavar="dyn")
-
+    parser.add_option("--dpi", dest="dpi", default=300, type=int,
+                      help="figure' dpi, default: 300", metavar="dpi")
+    parser.add_option("-S", "--save-bands", dest="saveBands", action='store_true',
+                      help="saving of bands contributing to the plot, default: false", metavar="saveBands")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -103,8 +106,10 @@ if __name__ == "__main__":
     elif options.bandplot:
         lim = options.lim.split(',')
         lim = [float(i) for i in lim]
+        pmaxmin = options.max.split(',')
+        pmaxmin = [float(i) for i in pmaxmin]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, p_max=options.max)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, saveBands=options.saveBands, dpi=options.dpi)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

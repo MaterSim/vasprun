@@ -43,10 +43,11 @@ if __name__ == "__main__":
                       help="figure' dpi, default: 300", metavar="dpi")
     parser.add_option("-S", "--save-bands", dest="saveBands", action='store_true',
                       help="saving of bands contributing to the plot, default: false", metavar="saveBands")
-    parser.add_option("-E", "--fermi--energy", dest="fermiEnergy", default=None,
+    parser.add_option("-E", "--efermi", dest="fermiEnergy", default=None,
                       help="fermi energy setting, default: read from vasprun.xml", metavar="fermiEnergy")
-    parser.add_option("--point-tags", dest="kTags", default=None,
-                      help="tags for high-symmetry k-points, default: None", metavar="kTags")
+    parser.add_option('--labels', default=None,
+                      help='Labels for each of high symmetry points. (e.g., \'$\Gamma$ X M\'; default None)')
+
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -114,8 +115,8 @@ if __name__ == "__main__":
         pmaxmin = [float(i) for i in pmaxmin]
         test.parse_bandpath()
         Ef = None
-        if options.kTags is not None:
-            kTags = options.kTags.split(',')
+        if options.labels:
+            kTags = options.labels.split()
         else:
             kTags = None
         if options.fermiEnergy is not None:

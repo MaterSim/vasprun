@@ -12,7 +12,8 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-rcParams.update({'figure.autolayout': True})
+rcParams.update({'figure.autolayout': True,
+                 'text.usetex':       True})
 plt.style.use("bmh")
 
 
@@ -112,8 +113,8 @@ class vasprun:
                 self.values["finalpos"] = self.parse_finalpos(child)
             elif child.tag not in ("i", "r", "v", "incar", "kpoints", "atominfo", "calculation"):
                 self.values[child.tag] = self.parse_vaspxml(child)
-            # else:
-            #    return 1
+            else:
+                return 1
             self.dict_clean(self.values)
 
     @staticmethod
@@ -359,15 +360,17 @@ class vasprun:
         for s in dos.find("total").find("array").findall("set"):
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
-        if len(dos.find("partial"))>0:
-            for s in dos.find("partial").find("array").findall("set"):
-                for i, ss in enumerate(s.findall("set")):
-                    p = []
-                    for sss in ss.findall("set"):
-                        p.append(self.parse_varray_pymatgen(sss))
-                    p_dos.append(p)
-
-        return t_dos, p_dos
+        try:
+            if len(dos.find("partial"))>0:
+                for s in dos.find("partial").find("array").findall("set"):
+                    for i, ss in enumerate(s.findall("set")):
+                        p = []
+                        for sss in ss.findall("set"):
+                            p.append(self.parse_varray_pymatgen(sss))
+                        p_dos.append(p)
+            return t_dos, p_dos
+        except TypeError:
+            return t_dos, None
 
     def parse_projected(self, proj):
         projected = []
@@ -678,7 +681,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], saveBands=False, dpi=300):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], fermiEnergy=None, saveBands=False, dpi=300, kTags=None):
         """
         plot the bandstructure
 
@@ -692,7 +695,10 @@ class vasprun:
             A figure with band structure
         """
         self.parse_bandpath()
-        efermi = self.values["calculation"]["efermi"]
+        if fermiEnergy is None:
+            efermi = self.values["calculation"]["efermi"]
+        else:
+            efermi = fermiEnergy
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
         paths = self.values['band_paths']
         band_pts = self.values['band_points']
@@ -703,9 +709,10 @@ class vasprun:
             band = eigens[:, i, 0] - efermi
             if np.all(band < ylim[0]) or np.all(band > ylim[1]):
                 continue
-            p = np.empty([len(paths)])
-            for kpt,_ in enumerate(paths):
-                p[kpt] = np.sum(proj[kpt, i, :, :])
+            if styles == 'projected':
+                p = np.empty([len(paths)])
+                for kpt,_ in enumerate(paths):
+                    p[kpt] = np.sum(proj[kpt, i, :, :])
             if len(band)/len(paths) == 2:
                 plt.plot(paths, band[:len(paths)], c='black', lw=1.0)
                 plt.plot(paths, band[len(paths):], c='red', lw=1.0)
@@ -721,18 +728,23 @@ class vasprun:
                 if saveBands:
                     np.savetxt('band%04d.dat'%i,band)
 
+        xticks = [0]
         for pt in band_pts:
             plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
+            xticks.append(pt)
 
         if styles == 'projected': 
             cbar = plt.colorbar(orientation='horizontal', 
                                 ticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], 
                                 )
             cbar.set_label('ratio of projected DOS')#, fontsize=12)
-        plt.ylabel("Energy (eV)")
+        plt.ylabel(r"Energy, $E_b-E_f$ (eV)")
         plt.ylim(ylim)
         plt.xlim([0, paths[-1]])
-        plt.xticks([])
+        if kTags is None:
+            plt.xticks([])
+        else:
+            plt.xticks(xticks,kTags)
         if filename is None:
             plt.show()
         else:

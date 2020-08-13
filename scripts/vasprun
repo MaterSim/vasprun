@@ -43,6 +43,10 @@ if __name__ == "__main__":
                       help="figure' dpi, default: 300", metavar="dpi")
     parser.add_option("-S", "--save-bands", dest="saveBands", action='store_true',
                       help="saving of bands contributing to the plot, default: false", metavar="saveBands")
+    parser.add_option("-E", "--fermi--energy", dest="fermiEnergy", default=None,
+                      help="fermi energy setting, default: read from vasprun.xml", metavar="fermiEnergy")
+    parser.add_option("--point-tags", dest="kTags", default=None,
+                      help="tags for high-symmetry k-points, default: None", metavar="kTags")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -109,7 +113,14 @@ if __name__ == "__main__":
         pmaxmin = options.max.split(',')
         pmaxmin = [float(i) for i in pmaxmin]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, saveBands=options.saveBands, dpi=options.dpi)
+        Ef = None
+        if options.kTags is not None:
+            kTags = options.kTags.split(',')
+        else:
+            kTags = None
+        if options.fermiEnergy is not None:
+            Ef = float(options.fermiEnergy)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, fermiEnergy=Ef, saveBands=options.saveBands, dpi=options.dpi, kTags=kTags)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

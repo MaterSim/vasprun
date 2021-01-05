@@ -206,7 +206,10 @@ class vasprun:
         if varray.get("type") == 'int':
             m = [[int(number) for number in v.text.split()] for v in varray.findall("v")]
         else:
-            m = [[float(number) for number in v.text.split()] for v in varray.findall("v")]
+            try:
+                m = [[float(number) for number in v.text.split()] for v in varray.findall("v")]
+            except:
+                m = [[0 for number in v.text.split()] for v in varray.findall("v")]
         return m
 
     @staticmethod
@@ -422,7 +425,10 @@ class vasprun:
             elif i.tag == "energy":
                 for e in i.findall("i"):
                     if e.attrib.get("name") == "e_fr_energy":
-                        energy = float(e.text)
+                        try:
+                            energy = float(e.text)
+                        except ValueError:
+                            energy = 1000000000
                     else:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
             elif i.tag == "array" and i.attrib.get("name") == "born_charges":

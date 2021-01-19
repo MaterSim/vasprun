@@ -7,6 +7,7 @@ from pprint import pprint
 from optparse import OptionParser
 import pandas as pd
 from tabulate import tabulate
+import warnings
 
 import matplotlib as mpl
 mpl.use("Agg")

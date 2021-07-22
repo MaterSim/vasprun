@@ -686,7 +686,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], fermiEnergy=None, saveBands=False, dpi=300, kTags=None):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], saveBands=False, dpi=300):
         """
         plot the bandstructure
 
@@ -700,10 +700,7 @@ class vasprun:
             A figure with band structure
         """
         self.parse_bandpath()
-        if fermiEnergy is None:
-            efermi = self.values["calculation"]["efermi"]
-        else:
-            efermi = fermiEnergy
+        efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
         paths = self.values['band_paths']
         band_pts = self.values['band_points']

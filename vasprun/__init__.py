@@ -695,6 +695,8 @@ class vasprun:
             styles: string (`normal` or `projected`)
             ylim: list, the range of energy values on the y-axis, e.g. [-5, 3]
             p_max: float (the ratio of color plot in the `projected` mode)
+            fermiEnergy: Band Structure calculations do not contain the proper Fermi energy
+                         - it needs to be set by hand for precise calculations
 
         Returns:
             A figure with band structure
@@ -704,11 +706,11 @@ class vasprun:
             efermi = self.values["calculation"]["efermi"]
         else:
             efermi = fermiEnergy
-        eigens = np.array(self.values['calculation']['eband_eigenvalues'])
-        paths = self.values['band_paths']
-        band_pts = self.values['band_points']
-        proj = np.array(self.values["calculation"]["projected"]) #[N_kpts, N_band, Ions, 9]
-        cm = plt.cm.get_cmap('RdYlBu')
+        eigens            = np.array(self.values['calculation']['eband_eigenvalues'])
+        paths             = self.values['band_paths']
+        band_pts          = self.values['band_points']
+        proj              = np.array(self.values["calculation"]["projected"]) #[N_kpts, N_band, Ions, 9]
+        cm                = plt.cm.get_cmap('RdYlBu')
         nkpt, nband, nocc = np.shape(eigens)
         for i in range(nband):
             band = eigens[:, i, 0] - efermi
@@ -758,8 +760,12 @@ class vasprun:
         N_atom = len(a_array)
         tdos = np.array(self.values['calculation']['tdos'])
         pdos = np.array(self.values['calculation']['pdos'])
-        a, b, c, d = np.shape(pdos)
-        pdos = np.reshape(pdos, [b, a, c, d])
+        try:
+            a, b, c, d = np.shape(pdos)
+            pdos = np.reshape(pdos, [b, a, c, d])
+        except ValueError as error:
+            if style != 't':
+                raise error
         if style == 't':
             for spin in tdos:
                 mydos.append(spin[rows, 1])
@@ -804,7 +810,7 @@ class vasprun:
             mydos[1] *= -1
         return mydos, labels
 
-    def plot_dos(self, filename=None, smear=None, styles='t', xlim=[-3, 3], dpi=300):
+    def plot_dos(self, filename=None, smear=None, fermiEnergy=None, styles='t', xlim=[-3, 3], dpi=300):
         """
         plot the DOS
 
@@ -813,11 +819,16 @@ class vasprun:
             styles: string (`t` or `s` or `t+spd`)
             xlim: list, the range of energy values on the x-axis, e.g. [-5, 3]
             smear: float (the width of smearing, defult: None) 
+            fermiEnergy: Band Structure calculations do not contain the proper Fermi energy
+                         - it needs to be set by hand for precise calculations
 
         Returns:
             A figure with band structure
         """
-        efermi = self.values['calculation']['efermi']
+        if fermiEnergy is None:
+            efermi = self.values["calculation"]["efermi"]
+        else:
+            efermi = fermiEnergy
         tdos = np.array(self.values['calculation']['tdos'][0])
         tdos[:, 0] -= efermi
         e = tdos[:, 0]

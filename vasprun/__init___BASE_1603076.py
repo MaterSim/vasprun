@@ -7,7 +7,6 @@ from pprint import pprint
 from optparse import OptionParser
 import pandas as pd
 from tabulate import tabulate
-import warnings
 
 import matplotlib as mpl
 mpl.use("Agg")
@@ -207,10 +206,7 @@ class vasprun:
         if varray.get("type") == 'int':
             m = [[int(number) for number in v.text.split()] for v in varray.findall("v")]
         else:
-            try:
-                m = [[float(number) for number in v.text.split()] for v in varray.findall("v")]
-            except:
-                m = [[0 for number in v.text.split()] for v in varray.findall("v")]
+            m = [[float(number) for number in v.text.split()] for v in varray.findall("v")]
         return m
 
     @staticmethod
@@ -363,14 +359,13 @@ class vasprun:
         for s in dos.find("total").find("array").findall("set"):
             for ss in s.findall("set"):
                 t_dos.append(self.parse_varray_pymatgen(ss))
-        if dos.find("partial") is not None:
-            if len(dos.find("partial"))>0:
-                for s in dos.find("partial").find("array").findall("set"):
-                    for i, ss in enumerate(s.findall("set")):
-                        p = []
-                        for sss in ss.findall("set"):
-                            p.append(self.parse_varray_pymatgen(sss))
-                        p_dos.append(p)
+        if len(dos.find("partial"))>0:
+            for s in dos.find("partial").find("array").findall("set"):
+                for i, ss in enumerate(s.findall("set")):
+                    p = []
+                    for sss in ss.findall("set"):
+                        p.append(self.parse_varray_pymatgen(sss))
+                    p_dos.append(p)
 
         return t_dos, p_dos
 
@@ -426,10 +421,7 @@ class vasprun:
             elif i.tag == "energy":
                 for e in i.findall("i"):
                     if e.attrib.get("name") == "e_fr_energy":
-                        try:
-                            energy = float(e.text)
-                        except ValueError:
-                            energy = 1000000000
+                        energy = float(e.text)
                     else:
                         Warning("No e_fr_energy found in <calculation><energy> tag, energy set to 0.0")
             elif i.tag == "array" and i.attrib.get("name") == "born_charges":
@@ -686,7 +678,7 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], fermiEnergy=None, saveBands=False, dpi=300, kTags=None):
+    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], saveBands=False, dpi=300):
         """
         plot the bandstructure
 
@@ -700,10 +692,7 @@ class vasprun:
             A figure with band structure
         """
         self.parse_bandpath()
-        if fermiEnergy is None:
-            efermi = self.values["calculation"]["efermi"]
-        else:
-            efermi = fermiEnergy
+        efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
         paths = self.values['band_paths']
         band_pts = self.values['band_points']

@@ -1,4 +1,4 @@
-[![PyPI downloads](https://img.shields.io/pypi/dm/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
+[![Downloads](https://pepy.tech/badge/vasprun)](https://pepy.tech/project/vasprun)
 [![python](https://img.shields.io/pypi/pyversions/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
 [![version](https://img.shields.io/pypi/v/vasprun-xml)](https://pypi.org/project/vasprun-xml/)
 [![Documentation Status](https://readthedocs.org/projects/vasprun-xml/badge/?version=latest)](https://vasprun-xml.readthedocs.io/en/latest/?badge=latest)

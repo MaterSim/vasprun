@@ -8,6 +8,7 @@ from optparse import OptionParser
 import pandas as pd
 from tabulate import tabulate
 import warnings
+from scipy import constants
 
 import matplotlib as mpl
 mpl.use("Agg")
@@ -32,15 +33,15 @@ def smear_data(data, sigma):
     return data
 
 class units:
-    am2kg = 1.6605402e-27
-    ev2j = 1.60217733e-19
-    plank = 6.626075e-34
-    c = 2.99792458e+10
-    pi = 3.1415926
-    proton_mass = 1836
-    ev2hartree = 27.211386245988
-    a2bohr = 0.529
-    ev2cm = 8065.6
+    pi           =      constants.pi                                                                 #3.1415926
+    am2kg        =      constants.physical_constants['atomic mass constant'][0]                      #1.6605402e-27
+    ev2j         =      constants.physical_constants['electron volt-joule relationship'][0]          #1.60217733e-19
+    plank        =      constants.physical_constants['Planck constant'][0]                           #6.626075e-34
+    c            =  1e2*constants.physical_constants['speed of light in vacuum'][0]                  #2.99792458e+10 in cm/s?
+    proton_mass  =      constants.physical_constants['proton-electron mass ratio'][0]                #1836
+    ev2hartree   =      constants.physical_constants['Hartree energy in eV'][0]                      #27.211386245988
+    a2bohr       = 1e10*constants.physical_constants['Bohr radius'][0]                               #0.529
+    ev2cm        = 1e-2*constants.physical_constants['electron volt-inverse meter relationship'][0]  #8065.6
 
 class vasprun:
     """

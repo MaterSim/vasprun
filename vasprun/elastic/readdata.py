@@ -1,6 +1,6 @@
 """
-
-
+   Module ```readdata``` contains a class ```XMLParser``` extracting
+   both stress and strain from the ```vasprun.xml```
 """
 import numpy as np
 import defusedxml.ElementTree as ET

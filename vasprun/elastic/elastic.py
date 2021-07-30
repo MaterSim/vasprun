@@ -1,5 +1,9 @@
 """
-
+   Module ```elastic``` contains two classes:
+     (i) ```Calculation``` containing the scipy-based engine 
+     fiting the elastic tensor C to the stress-strain relation.
+     (ii) ```Properites``` with the methods deriving the elastic properties
+     from the elastic tensor (within different approximations)
 """
 import numpy as np
 from vasprun.elastic.CMatrices import ElasticTensor

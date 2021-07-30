@@ -17,7 +17,7 @@ setup(
     long_description = long_description,
     long_description_content_type = 'text/markdown',
     url="https://github.com/qzhu2017/vasprun",
-    packages=['vasprun'],
+    packages=['vasprun','vasprun.elastic'],
     scripts=['scripts/vasprun'],
     classifiers=[
         "Programming Language :: Python :: 3",

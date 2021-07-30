@@ -1,5 +1,5 @@
 """
-   Submodule for calculation of the elastic properies
+   Submodule for calculation of the elastic properties
    from the stres--strain relation based on VASP's ```vasprun.xml``` file.
 
    Module CMatrix contains a class ```ElasticTensor``` 
@@ -7,7 +7,7 @@
 
    Module ```elastic``` contains two classes:
      (i) ```Calculation``` containing the scipy-based engine 
-     fiting the elastic tensor C to the stress-strain relation.
+     fitting the elastic tensor C to the stress-strain relation.
      (ii) ```Properites``` with the methods deriving the elastic properties
      from the elastic tensor (within different approximations)
 

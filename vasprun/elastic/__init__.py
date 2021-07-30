@@ -1,6 +1,6 @@
 """
    Submodule for calculation of the elastic properties
-   from the stres--strain relation based on VASP's ```vasprun.xml``` file.
+   from the stress--strain relation based on VASP's ```vasprun.xml``` file.
 
    Module CMatrix contains a class ```ElasticTensor``` 
    with all 9 different symmetry-based constrains 6x6 elastic tensors.

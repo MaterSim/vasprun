@@ -147,7 +147,6 @@ class vasprun:
             d[name] = self.parse_varray(i)
         return d
 
-
     def parse_dynmat(self, dynmat):
         hessian, eigenvalues, eigenvectors = [], [], []
         for va in dynmat.findall("varray"):
@@ -201,6 +200,12 @@ class vasprun:
             m = [[_vasprun_float(i) for i in v.text.split()] for v in elem]
 
         return m
+
+    def parse_v(self, v):
+        """
+        obtain final configuration
+        """
+        return [float(n) for n in v.text.split()]
 
     @staticmethod
     def parse_varray(varray):
@@ -401,6 +406,11 @@ class vasprun:
         epsilon_ion = []
         epsilon_ = []
         proj = []
+        pion = []
+        psp1 = []
+        psp2 = []
+        pelc = []
+
         for i in calculation.iterchildren():
             if i.attrib.get("name") == "stress":
                 stress = self.parse_varray(i)
@@ -440,6 +450,17 @@ class vasprun:
             elif i.tag == "dynmat":
                 hessian, dyn_eigenvalues, dyn_eigenvectors = self.parse_dynmat(i)
 
+            elif i.tag == "v":
+                if i.attrib.get("name") == "PION":
+                    pion = self.parse_v(i)
+                elif i.attrib.get("name") == "PSP1":
+                    psp1 = self.parse_v(i)
+                elif i.attrib.get("name") == "PSP2":
+                    psp2 = self.parse_v(i)
+                elif i.attrib.get("name") == "PELC":
+                    pelc = self.parse_v(i)
+
+
         calculation = {}
         calculation["stress"] = stress
         calculation["efermi"] = efermi
@@ -454,6 +475,10 @@ class vasprun:
         calculation["normal_modes_eigenvalues"] = dyn_eigenvalues
         calculation["normal_modes_eigenvectors"] = dyn_eigenvectors 
         calculation["epsilon_ion"] = epsilon_ion
+        calculation["pion"] = pion
+        calculation["psp1"] = psp1
+        calculation["psp2"] = psp2
+        calculation["pelc"] = pelc
         return calculation, scf_count
 
     def parse_kpoints(self, kpoints):

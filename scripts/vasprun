@@ -65,7 +65,7 @@ if __name__ == "__main__":
             print(tag, ':  ', test.values[tag])
         else:
             for subtag in output[tag]:
-                print(subtag, ':  ', test.values[tag][subtag])
+                print(subtag, ':  {:12.4f}'.format(test.values[tag][subtag]))
 
     # show VBM and CBM when it is nonmetal
     if test.values['metal'] is False:

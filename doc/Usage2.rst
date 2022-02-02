@@ -76,8 +76,8 @@ According to the vasp's arrangements, most of the calculation results shoud be f
      
 .. code-block:: Python
 
-     >>> vasp.values['calculation'].keys()
-dict_keys(['stress', 'efermi', 'force', 'eband_eigenvalues', 'energy', 'tdos', 'pdos', 'projected', 'born_charges', 'hessian', 'normal_modes_eigenvalues', 'normal_modes_eigenvectors', 'epsilon_ion', 'pion', 'psp1', 'psp2', 'pelc', 'energy_per_atom'])
+    >>> vasp.values['calculation'].keys()
+    dict_keys(['stress', 'efermi', 'force', 'eband_eigenvalues', 'energy', 'tdos', 'pdos', 'projected', 'born_charges', 'hessian', 'normal_modes_eigenvalues', 'normal_modes_eigenvectors', 'epsilon_ion', 'pion', 'psp1', 'psp2', 'pelc', 'energy_per_atom'])
 
 
 
@@ -114,4 +114,3 @@ If you want to adjust the range of energy, just use the ``ylim`` parameter,
    :width: 903 px
    :scale: 40 %
 
-for more advanced usage, please refer to the :ref:`vasprun package`

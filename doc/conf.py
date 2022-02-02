@@ -18,14 +18,14 @@ sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'vasprun'
-copyright = '2019, Qiang Zhu'
+project = 'vasprun-xml'
+copyright = '2019-2022, Qiang Zhu'
 author = 'Qiang Zhu'
 
 # The short X.Y version
-version = '1.0'
+version = '1.0.3'
 # The full version, including alpha/beta/rc tags
-release = 'vasprun-xml-1.0'
+release = 'vasprun-xml-1.0.3'
 
 
 # -- General configuration ---------------------------------------------------

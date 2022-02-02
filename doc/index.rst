@@ -39,7 +39,7 @@ Required packages:
 Installation
 ------------
 
-To install it, one can simply type ``pip install vasprun`` or make a copy of the source code, and then install it manually.
+To install it, one can simply type ``pip install vasprun-xml`` or make a copy of the source code, and then install it manually.
 ::
 
   git clone https://github.com/qzhu2017/vasprun.git

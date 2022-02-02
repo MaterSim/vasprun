@@ -70,6 +70,17 @@ Then, you can retrieve many informations from ``vasp.values`` attribute. The val
      'PREC': 'accurate',
      'SIGMA': 0.05}
 
+
+
+According to the vasp's arrangements, most of the calculation results shoud be found in `values['calculation']` dict.
+     
+.. code-block:: Python
+
+     >>> vasp.values['calculation'].keys()
+dict_keys(['stress', 'efermi', 'force', 'eband_eigenvalues', 'energy', 'tdos', 'pdos', 'projected', 'born_charges', 'hessian', 'normal_modes_eigenvalues', 'normal_modes_eigenvectors', 'epsilon_ion', 'pion', 'psp1', 'psp2', 'pelc', 'energy_per_atom'])
+
+
+
 3, useful functions
 ---------------------
 

@@ -17,7 +17,7 @@ Introduction
 
 Version info
 ============
-The current version is ``1.0.3`` at `GitHub <https://github.com/qzhu2017/vasprun>`_. 
+The current version is ``1.0.4`` at `GitHub <https://github.com/qzhu2017/vasprun>`_. 
 
 Expect updates upon request by `Qiang Zhu <https://qzhu2017.github.io>`_ at University of Nevada Las Vegas.
 

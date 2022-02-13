@@ -66,7 +66,7 @@ class vasprun:
             self.error = True
             self.errormsg = 'corrupted file found'
 
-        if verbosity > 0 and self.error is True:
+        if verbosity > 0 and self.error:
             print("----------Warning---------------")
             print(self.errormsg)
             print("--------------------------------")
@@ -103,6 +103,8 @@ class vasprun:
                 if self.values['parameters']['electronic']['electronic convergence']['NELM'] == scf_count:
                     self.error = True
                     self.errormsg = 'SCF is not converged'
+                else:
+                    self.error = False #if last SCF is fine, results are fine
 
                 if self.values['parameters']['electronic']['electronic spin']['LSORBIT'] \
                         or self.values['parameters']['electronic']['electronic spin']['ISPIN'] == 2:

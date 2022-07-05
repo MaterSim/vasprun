@@ -43,6 +43,11 @@ if __name__ == "__main__":
                       help="figure' dpi, default: 300", metavar="dpi")
     parser.add_option("-S", "--save-bands", dest="saveBands", action='store_true',
                       help="saving of bands contributing to the plot, default: false", metavar="saveBands")
+    parser.add_option("-E", "--efermi", dest="fermiEnergy", default=None,
+                      help="fermi energy setting, default: read from vasprun.xml", metavar="fermiEnergy")
+    parser.add_option('--labels', default=None,
+                      help='Labels for each of high symmetry points. (e.g., \'$\Gamma$ X M\'; default None)')
+
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -102,14 +107,24 @@ if __name__ == "__main__":
     elif options.dosplot:
         lim = options.lim.split(',')
         lim = [float(i) for i in lim]
-        test.plot_dos(styles=options.dosplot, filename=options.figname, xlim=lim, smear=options.smear)
+        Ef  = None
+        if options.fermiEnergy is not None:
+            Ef = float(options.fermiEnergy)
+        test.plot_dos(styles=options.dosplot, filename=options.figname, xlim=lim, smear=options.smear, fermiEnergy=Ef)
     elif options.bandplot:
         lim = options.lim.split(',')
         lim = [float(i) for i in lim]
         pmaxmin = options.max.split(',')
         pmaxmin = [float(i) for i in pmaxmin]
         test.parse_bandpath()
-        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, saveBands=options.saveBands, dpi=options.dpi)
+        Ef = None
+        if options.labels:
+            kTags = options.labels.split()
+        else:
+            kTags = None
+        if options.fermiEnergy is not None:
+            Ef = float(options.fermiEnergy)
+        test.plot_band(styles=options.bandplot, filename=options.figname, ylim=lim, plim=pmaxmin, fermiEnergy=Ef, saveBands=options.saveBands, dpi=options.dpi, kTags=kTags)
     elif options.band:
         vb = test.values['bands']-1
         cb = vb + 1

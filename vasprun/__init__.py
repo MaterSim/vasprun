@@ -12,6 +12,7 @@ import warnings
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from matplotlib import rcParams
 rcParams.update({'figure.autolayout': True})
 plt.style.use("bmh")
@@ -389,7 +390,7 @@ class vasprun:
                 for sss in ss.findall("set"):
                     p.append(self.parse_varray_pymatgen(sss))
                 projected.append(p)
-        
+
         return projected #[N_kpts, N_bands]
 
     def parse_calculation(self, calculation):
@@ -403,7 +404,7 @@ class vasprun:
         pdos = []
         born_chgs = []
         hessian = []
-        dyn_eigenvalues = [] 
+        dyn_eigenvalues = []
         dyn_eigenvectors = []
         epsilon_ion = []
         epsilon_ = []
@@ -475,7 +476,7 @@ class vasprun:
         calculation["born_charges"] = born_chgs
         calculation["hessian"] = hessian
         calculation["normal_modes_eigenvalues"] = dyn_eigenvalues
-        calculation["normal_modes_eigenvectors"] = dyn_eigenvectors 
+        calculation["normal_modes_eigenvectors"] = dyn_eigenvectors
         calculation["epsilon_ion"] = epsilon_ion
         calculation["pion"] = pion
         calculation["psp1"] = psp1
@@ -607,7 +608,7 @@ class vasprun:
         if filename is not None:
             with open(filename, 'w') as f:
                 f.writelines(contents)
-        elif print_incar: 
+        elif print_incar:
             print(contents)
         self.incar = contents
 
@@ -631,13 +632,13 @@ class vasprun:
         """
         export poscar
 
-        Args: 
-            filename: string 
-        Returns: 
+        Args:
+            filename: string
+        Returns:
             a POSCAR file
         """
 
-        comp = self.values["composition"] 
+        comp = self.values["composition"]
         atomNames = self.values["name_array"]
         latt = self.values["finalpos"]["basis"]
         pos = self.values["finalpos"]["positions"]
@@ -667,7 +668,7 @@ class vasprun:
     def parse_bandpath(self):
         kpts = self.values['kpoints']['list']
         rec_basis = np.array(self.values['finalpos']['rec_basis'])
-       
+
         def inline(kpt, path):
             if len(path) < 2:
                 return True
@@ -713,7 +714,8 @@ class vasprun:
         self.values['band_paths'] = band_paths
         self.values['band_points'] = band_points
 
-    def plot_band(self, filename=None, styles='normal', ylim=[-20, 3], plim=[0.0,0.5], saveBands=False, dpi=300):
+    def plot_band(self, ax=None, filename=None, style='normal', ylim=[-20, 3],
+                  plim=[0.0,0.5], labels=None, saveBands=False, dpi=300):
         """
         plot the bandstructure
 
@@ -721,11 +723,13 @@ class vasprun:
             filename: string
             styles: string (`normal` or `projected`)
             ylim: list, the range of energy values on the y-axis, e.g. [-5, 3]
-            p_max: float (the ratio of color plot in the `projected` mode)
+            plim: float (the ratio of color plot in the `projected` mode)
 
         Returns:
             A figure with band structure
         """
+        if ax is None: fig, ax = plt.subplots()
+
         self.parse_bandpath()
         efermi = self.values["calculation"]["efermi"]
         eigens = np.array(self.values['calculation']['eband_eigenvalues'])
@@ -742,14 +746,14 @@ class vasprun:
             for kpt,_ in enumerate(paths):
                 p[kpt] = np.sum(proj[kpt, i, :, :])
             if len(band)/len(paths) == 2:
-                plt.plot(paths, band[:len(paths)], c='black', lw=1.0)
-                plt.plot(paths, band[len(paths):], c='red', lw=1.0)
+                ax.plot(paths, band[:len(paths)], c='black', lw=1.0)
+                ax.plot(paths, band[len(paths):], c='red', lw=1.0)
             else:
-                plt.plot(paths, band, c='black', lw=1.0)
-            if styles == 'projected':
+                ax.plot(paths, band, c='black', lw=1.0)
+            if style == 'projected':
                 p[p<plim[0]] = plim[0]
                 p[p>plim[1]] = plim[1]
-                plt.scatter(paths, band, c=p, vmin=plim[0], vmax=plim[1], cmap=cm, s=10)
+                ax.scatter(paths, band, c=p, vmin=plim[0], vmax=plim[1], cmap=cm, s=10)
                 if saveBands:
                     np.savetxt('band%04d.dat'%i,np.transpose([band,p]))
             else:
@@ -757,22 +761,31 @@ class vasprun:
                     np.savetxt('band%04d.dat'%i,band)
 
         for pt in band_pts:
-            plt.axvline(x=pt, ls='-', color='k', alpha=0.5)
+            ax.axvline(x=pt, ls='-', color='k', alpha=0.5)
 
-        if styles == 'projected': 
-            cbar = plt.colorbar(orientation='horizontal', 
-                                ticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], 
+        if style == 'projected':
+            cbar = plt.colorbar(orientation='horizontal',
+                                ticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
                                 )
             cbar.set_label('ratio of projected DOS')#, fontsize=12)
-        plt.ylabel("Energy (eV)")
-        plt.ylim(ylim)
-        plt.xlim([0, paths[-1]])
-        plt.xticks([])
+        ax.set_ylabel("Energy (eV)")
+        ax.set_ylim(ylim)
+        ax.set_xlim([0, paths[-1]])
+        ax.set_xticks([])
+
+        # Manually setup the xlabels
+        if labels is not None:
+            xticks = [0] + band_pts
+            print('ticks', xticks)
+            print('labels', labels)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(labels)
+
+
         if filename is None:
-            plt.show()
+            return ax #plt.show()
         else:
-            plt.savefig(filename,dpi=dpi)
-            plt.close()
+            plt.savefig(filename, dpi=dpi)
 
     def get_dos(self, rows, style='t'):
 
@@ -787,7 +800,7 @@ class vasprun:
         if style == 't':
             for spin in tdos:
                 mydos.append(spin[rows, 1])
-                labels.append('total')
+                labels.append('Total')
 
         elif style in ['s', 'p', 'd']:
             for spin in pdos:
@@ -803,12 +816,13 @@ class vasprun:
                     mydos.append(spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9])
                 labels.append(style)
 
+        # element based
         elif style[0] == 'a':
             if style[1].isdigit():
                 ids = style[1].split('-')
-                start, end = int(ids[0]), int(ids[1]) 
+                start, end = int(ids[0]), int(ids[1])
                 ids = range(start, end+1)
-            else: 
+            else:
                 ele = style[1:]
                 ids = []
                 for i in range(N_atom):
@@ -817,7 +831,7 @@ class vasprun:
             for spin in pdos:
                 spd = spin[ids[0], :, :]
                 for i in ids[1:]:
-                    spd += spin[i, :, :] 
+                    spd += spin[i, :, :]
                 mydos.append(spd[rows, 1] + spd[rows, 2] + spd[rows, 3] + spd[rows, 4] + \
                              spd[rows, 5] + spd[rows, 6] + spd[rows, 7] + spd[rows, 8] + spd[rows, 9])
                 labels.append(style[1:])
@@ -828,15 +842,18 @@ class vasprun:
             mydos[1] *= -1
         return mydos, labels
 
-    def plot_dos(self, filename=None, smear=None, styles='t', xlim=[-3, 3], dpi=300):
+    def plot_dos(self, ax=None, filename=None, smear=None, flip=False,
+                 style='t', xlim=[-3, 3], dos_range=[0, None], dpi=300):
         """
         plot the DOS
 
         Args:
+            ax: default None
             filename: string
             styles: string (`t` or `s` or `t+spd`)
             xlim: list, the range of energy values on the x-axis, e.g. [-5, 3]
-            smear: float (the width of smearing, defult: None) 
+            smear: float (the width of smearing, defult: None)
+            flip: whether or not flip the x/y
 
         Returns:
             A figure with band structure
@@ -848,17 +865,22 @@ class vasprun:
         rows = (e > xlim[0]) & (e < xlim[1])
         e = e[rows]
         plt_obj = {}
-        for option in styles.split('+'):
+        options = []
+        for option in style.split('+'):
             if option == 'spd':
-                option = ['s', 'p', 'd']
+                options.extend(['s', 'p', 'd'])
+            elif option == 'a':
+                for ele in self.values['elements']:
+                    options.append('a'+ele)
             else:
-                option = [option]
-            for style in option:
-                mydos, labels = self.get_dos(rows, style)
-                for data, label in zip(mydos, labels):
-                    plt_obj[label] = data
+                options.append(option)
+        for style in options:
+            mydos, labels = self.get_dos(rows, style)
+            for data, label in zip(mydos, labels):
+                plt_obj[label] = data
 
-        fig, ax = plt.subplots()
+        if ax is None: fig, ax = plt.subplots()
+
         lines1 = []
         lines2 = []
         labels1 = []
@@ -866,30 +888,77 @@ class vasprun:
         for label in plt_obj.keys():
             e = np.reshape(e, [len(e), 1])
             data = np.reshape(plt_obj[label], [len(e), 1])
-            if smear is not None: 
+            if smear is not None:
                 data = np.hstack((e, data))
                 data = smear_data(data, smear)
                 data = data[:, 1]
+            ls = '-' if label=='Total' else '--'
             if label.find('down') > 0:
-                lines2 += ax.plot(e, data)
+                if flip:
+                    lines2 += ax.plot(data, e, ls=ls)
+                else:
+                    lines2 += ax.plot(e, data, ls=ls)
                 labels2.append(label)
             else:
-                lines1 += ax.plot(e, data)
+                if flip:
+                    lines1 += ax.plot(data, e, ls=ls)
+                else:
+                    lines1 += ax.plot(e, data, ls=ls)
                 labels1.append(label)
-        leg1 = ax.legend(lines1, [label for label in labels1], fancybox=True, loc='upper right')
+
+        leg1 = ax.legend(lines1, [label for label in labels1],
+                         fancybox=True,
+                         loc='upper right')
+
         leg1.get_frame().set_alpha(0.5)
         if len(lines2) > 0:
             from matplotlib.legend import Legend
-            leg2 = Legend(ax, lines2, [label for label in labels2], fancybox=True, loc='lower right')
+            leg2 = Legend(ax, lines2, [label for label in labels2],
+                          fancybox=True, loc='lower right')
             ax.add_artist(leg2)
             leg2.get_frame().set_alpha(0.5)
 
-        plt.xlabel("Energy (eV)")
-        plt.ylabel("DOS")
-        plt.xlim(xlim)
-        if filename is None:
-            plt.show()
+        if flip:
+            #ax.set_ylabel("Energy (eV)")
+            ax.set_xlabel("DOS (States/eV)")
+            ax.set_ylim(xlim)
+            x_min, x_max = ax.get_xlim()
+            if dos_range[0] is not None: x_min = dos_range[0]
+            if dos_range[1] is not None: x_max = dos_range[1]
+            ax.set_xlim(x_min, x_max)
         else:
-            plt.savefig(filename,dpi=dpi)
-            plt.close()
+            ax.set_xlabel("Energy (eV)")
+            ax.set_ylabel("DOS")
+            ax.set_xlim(xlim)
+            y_min, y_max = ax.get_ylim()
+            if dos_range[0] is not None: y_min = dos_range[0]
+            if dos_range[1] is not None: y_max = dos_range[1]
+            ax.set_ylim(y_min, y_max)
+
+        if filename is None:
+            return ax #plt.show()
+        else:
+            plt.savefig(filename, dpi=dpi)
+
+    def plot_band_dos(self, filename=None, band_style='normal', dos_style='t+a', smear=None,
+                      e_range=[-10, 3], dos_max=None, plim=[0.0, 0.5],
+                      band_labels=None, figsize=(6, 4), dpi=300):
+        """
+        Args:
+            filename (string): the path of figure
+            smear (float): the width of smearing, defult: None
+            styles (string): (`t` or `s` or `t+spd` or ele)
+            e_range (list): the range of energy values on the x-axis, e.g. [-5, 3]
+
+        Returns:
+            A figure with band structure
+        """
+
+        fig = plt.figure(figsize=figsize)
+        gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1])
+        ax1 = plt.subplot(gs[0])
+        ax1 = self.plot_band(ax1, style=band_style, ylim=e_range, plim=plim, labels=band_labels)
+        ax2 = plt.subplot(gs[1])
+        ax2 = self.plot_dos(ax2, style=dos_style, xlim=e_range, dos_range=[0, dos_max], flip=True)
+        plt.savefig(filename, dpi=dpi)
 

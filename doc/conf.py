@@ -23,9 +23,9 @@ copyright = '2019-2022, Qiang Zhu'
 author = 'Qiang Zhu'
 
 # The short X.Y version
-version = '1.0.3'
+version = '1.0.5'
 # The full version, including alpha/beta/rc tags
-release = 'vasprun-xml-1.0.3'
+release = 'vasprun-xml-1.0.5'
 
 
 # -- General configuration ---------------------------------------------------

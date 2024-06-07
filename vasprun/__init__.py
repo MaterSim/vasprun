@@ -889,9 +889,11 @@ class vasprun:
             e = np.reshape(e, [len(e), 1])
             data = np.reshape(plt_obj[label], [len(e), 1])
             if smear is not None:
+                print("Apply smear", smear)
                 data = np.hstack((e, data))
                 data = smear_data(data, smear)
                 data = data[:, 1]
+
             ls = '-' if label=='Total' else '--'
             if label.find('down') > 0:
                 if flip:
@@ -959,6 +961,6 @@ class vasprun:
         ax1 = plt.subplot(gs[0])
         ax1 = self.plot_band(ax1, style=band_style, ylim=e_range, plim=plim, labels=band_labels)
         ax2 = plt.subplot(gs[1])
-        ax2 = self.plot_dos(ax2, style=dos_style, xlim=e_range, dos_range=[0, dos_max], flip=True)
+        ax2 = self.plot_dos(ax2, style=dos_style, smear=smear, xlim=e_range, dos_range=[0, dos_max], flip=True)
         plt.savefig(filename, dpi=dpi)
 

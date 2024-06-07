@@ -114,3 +114,17 @@ If you want to adjust the range of energy, just use the ``ylim`` parameter,
    :width: 903 px
    :scale: 40 %
 
+
+2024/06/07: Below is another example to plot the combined band/DOS from the scratch.
+
+.. code-block:: Python
+
+    from vasprun import vasprun
+    vasp = vasprun('data/vasprun.xml-band')
+    vasp.plot_band_dos(filename='band_dos.png', ylim=[-5,5])
+
+.. image:: ../images/band_dos.png
+   :height: 600 px
+   :width: 903 px
+   :scale: 40 %
+

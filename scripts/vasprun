@@ -43,6 +43,22 @@ if __name__ == "__main__":
                       help="figure' dpi, default: 300", metavar="dpi")
     parser.add_option("-S", "--save-bands", dest="saveBands", action='store_true',
                       help="saving of bands contributing to the plot, default: false", metavar="saveBands")
+    parser.add_option("-E", "--elastic", dest="runElasticCalculations", action='store_true',
+                      help="run calculations for the elastic properties (requires IBRION >=5), default: false")
+    parser.add_option("-C", "--elasticsymmetry", dest="symmetry", default="Triclinic",
+                      choices=['Triclinic', 'Monoclinic', 'Orthorhombic',
+                               'Trigonal6', 'Trigonal7', 'Hexagonal',
+                               'Tetragonal6', 'Tetragonal7', 'Cubic'],
+                      help="symmetry group of the supercell, default: Triclinic;\
+                            For calculation of elastic properties only!\
+                      choices: \"Triclinic\", \"Monoclinic\", \"Orthorhombic\",\
+                               \"Trigonal6\", \"Trigonal7\", \"Hexagonal\",\
+                               \"Tetragonal6\", \"Tetragonal7\", and \"Cubic\"")
+    parser.add_option("-A", "--approximation", dest="approximation", default="voigt",
+                      choices=['voigt','reuss','hill','all'],
+                      help="approximation used for the calculation of the elastic moduli, default: voigt;\
+                             For calculation of elastic properties only!\
+                             choices: \"voigt\", \"reuss\", \"hill\", and \"all\"")
 
     (options, args) = parser.parse_args()
     if options.vasprun is None:
@@ -145,3 +161,9 @@ if __name__ == "__main__":
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[0,0], eps[0,1], eps[0,2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[1,0], eps[1,1], eps[1,2]))
         print("{:25s} {:12.3f} {:12.3f} {:12.3f}".format('DFPT', eps[2,0], eps[2,1], eps[2,2]))
+    elif options.runElasticCalculations:
+        from vasprun.elastic import elastic
+        solver = elastic.Calculator(options=options,verbosity=0)
+        solver() # running calculations
+        solver.print()
+
